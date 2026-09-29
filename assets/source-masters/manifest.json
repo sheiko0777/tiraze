@@ -1,0 +1,88 @@
+{
+  "carpet.png": {
+    "size": 3510231,
+    "sha256": "aeb8faf0a802c2ea8c75966128a1f70b40f83e0876265dab55300afb547b2d95",
+    "parts": [
+      "carpet.png.part01",
+      "carpet.png.part02",
+      "carpet.png.part03",
+      "carpet.png.part04"
+    ]
+  },
+  "hero.mp4": {
+    "size": 6500952,
+    "sha256": "4210438c0114304cfc54deb18780759543fcfe4a9c5248eb367df719c1ddb75a",
+    "parts": [
+      "hero.mp4.part01",
+      "hero.mp4.part02",
+      "hero.mp4.part03",
+      "hero.mp4.part04",
+      "hero.mp4.part05",
+      "hero.mp4.part06"
+    ]
+  },
+  "hero.png": {
+    "size": 2551308,
+    "sha256": "bda8067a36aa79e8b30696daf2ff9c00d96ee8a8c6de659808f29be3c296f2ff",
+    "parts": [
+      "hero.png.part01",
+      "hero.png.part02",
+      "hero.png.part03"
+    ]
+  },
+  "keyring.png": {
+    "size": 2571212,
+    "sha256": "42c62d80f5e9b760b0934cc4b2804877b02a0f4e32782b8c848d70799f43505c",
+    "parts": [
+      "keyring.png.part01",
+      "keyring.png.part02",
+      "keyring.png.part03"
+    ]
+  },
+  "rawda.png": {
+    "size": 3575821,
+    "sha256": "ad2f56114476e3980aa67a723e92c0fbf7b23138cd7fa2b617aba09f90e7d652",
+    "parts": [
+      "rawda.png.part01",
+      "rawda.png.part02",
+      "rawda.png.part03",
+      "rawda.png.part04"
+    ]
+  },
+  "rihal-kaaba-box.jpg": {
+    "size": 2558367,
+    "sha256": "412028ee4d1a319c0875a0e20072004765ec7a23a86fdf3cc1ae91257486227c",
+    "parts": [
+      "rihal-kaaba-box.jpg.part01",
+      "rihal-kaaba-box.jpg.part02",
+      "rihal-kaaba-box.jpg.part03"
+    ]
+  },
+  "safaa.png": {
+    "size": 3280400,
+    "sha256": "d19ece75c0b750cc95c0ddea10fdb9d85ed910b13347c2575cb05b541dbba896",
+    "parts": [
+      "safaa.png.part01",
+      "safaa.png.part02",
+      "safaa.png.part03"
+    ]
+  },
+  "silk-detail.png": {
+    "size": 2784720,
+    "sha256": "57790a855899718de74b002971090c044f90b3f18e69a08edfe1c1b1e7927eb7",
+    "parts": [
+      "silk-detail.png.part01",
+      "silk-detail.png.part02",
+      "silk-detail.png.part03"
+    ]
+  },
+  "silk-editorial.png": {
+    "size": 2998483,
+    "sha256": "9fd9aa7fad9454ba531353e3f13398a91d1b1d15d48bf48892d4b4e51216bd35",
+    "parts": [
+      "silk-editorial.png.part01",
+      "silk-editorial.png.part02",
+      "silk-editorial.png.part03"
+    ]
+  }
+}

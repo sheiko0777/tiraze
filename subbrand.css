@@ -1,0 +1,67 @@
+/* IRTH Collectibles: endorsed identity, kept separate for Shopify theme integration. */
+.subbrand-lockup{display:inline-flex;align-items:baseline;justify-content:center;gap:8px;direction:ltr;white-space:nowrap;color:inherit;line-height:1.2}
+.subbrand-lockup .subbrand-name{display:inline;font:400 24px/1.2 'TTDrugs',serif;letter-spacing:3px}
+.subbrand-lockup .subbrand-script{display:inline;font:400 31px/1.2 'Liana',cursive;letter-spacing:0;text-transform:none}
+.brand .subbrand-lockup{color:var(--cream)}
+.parent-house-link{display:inline-flex;align-items:center;gap:7px;font-size:11px;white-space:nowrap}
+.parent-house-link span{font-family:Arial,sans-serif;font-size:12px}
+.reference-home .hero-copy .latin-title{margin-top:6px}
+.reference-home .hero-shade{background:linear-gradient(180deg,#07101b1a,#07101b94 48%,#07101b25)}
+.craft-inset:after{content:'';position:absolute;inset:0 0 auto;height:42%;background:linear-gradient(#080e1870,transparent);pointer-events:none}
+.craft-inset span{z-index:2}
+.reference-home .hero-copy .subbrand-name{font-size:35px;letter-spacing:4px}
+.reference-home .hero-copy .subbrand-script{font-size:43px}
+.reference-home .philosophy h2 .philosophy-wordmark{display:block;margin-top:9px}
+.reference-home .philosophy h2 .subbrand-lockup{display:inline-flex}
+.reference-home .philosophy h2 .subbrand-name{display:inline;font-size:27px;letter-spacing:3px}
+.reference-home .philosophy h2 .subbrand-script{display:inline;font-family:'Liana',cursive;font-size:34px}
+.menu-endorsement{font-size:12px;margin:0 0 25px;color:var(--muted)}
+.menu-parent{margin-top:30px;border-top:1px solid var(--line);padding-top:20px}
+.menu-parent .parent-house-link{font-size:15px}
+.menu-parent p{font-size:11px;color:var(--muted);margin:6px 0 0}
+.dialog-head .subbrand-name{font-size:23px}.dialog-head .subbrand-script{font-size:30px}
+#footer .footer-brand .brand{gap:12px;flex-wrap:wrap;justify-content:flex-start}
+#footer .footer-brand .subbrand-lockup{color:var(--navy)}
+#footer .footer-brand .subbrand-name{font-size:22px}
+#footer .footer-brand .subbrand-script{font-size:29px}
+#footer .footer-parent{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+#footer .footer-parent a{display:inline-flex;margin:0;font-size:inherit;text-decoration:underline;text-underline-offset:3px}
+#footer .footer-bottom .footer-preview{width:100%;font-size:9px;opacity:.65}
+.brand:focus-visible,.parent-house-link:focus-visible{outline:1px solid currentColor;outline-offset:5px}
+@media(max-width:1100px) and (min-width:761px){
+ .header-inner{gap:12px;padding-inline:16px}
+ .header-inner .subbrand-name{font-size:20px;letter-spacing:2px}
+ .header-inner .subbrand-script{font-size:26px}
+ .header-inner .nav-group.end>a[href='/concierge']{display:none}
+}
+@media(max-width:760px){
+ .header-inner{padding-inline:18px;gap:16px}
+ .header-inner .brand{gap:8px}
+ .header-inner .subbrand-lockup{gap:5px}
+ .header-inner .subbrand-name{font-size:19px;letter-spacing:2px}
+ .header-inner .subbrand-script{font-size:26px}
+ .reference-home .hero-copy h1{font-size:calc(28 * var(--u));line-height:1.1}
+ .reference-home .hero-copy .latin-title{margin-top:calc(5 * var(--u))}
+ .reference-home .hero-copy .subbrand-lockup{gap:calc(7 * var(--u))}
+ .reference-home .hero-copy .subbrand-name{font-size:calc(24 * var(--u));letter-spacing:calc(3 * var(--u))}
+ .reference-home .hero-copy .subbrand-script{font-size:calc(31 * var(--u))}
+ .reference-home .philosophy h2{font-size:calc(25 * var(--u))}
+ .reference-home .philosophy h2 .philosophy-wordmark{margin-top:calc(5 * var(--u))}
+ .reference-home .philosophy h2 .subbrand-name{font-size:calc(20 * var(--u))}
+ .reference-home .philosophy h2 .subbrand-script{font-size:calc(26 * var(--u))}
+ .reference-home .collections-home:before{background:transparent}
+ /* Explicit geometry prevents inherited margins adding 128px to the gallery. */
+ .reference-home .collector{padding:0}
+ .reference-home .collector-intro{margin:0 auto;height:calc(253 * var(--u))}
+ .reference-home #gallery-stage{height:calc(555 * var(--u));display:flex;flex-direction:column;align-items:center;padding:0 calc(8 * var(--u)) calc(25 * var(--u));gap:calc(16 * var(--u))}
+ .reference-home .gallery-stage{flex:1;min-height:0;height:auto;width:100%;padding:0;margin:0}
+ .reference-home .gallery-stage>img:not(.side-shot){height:100%;width:100%;object-fit:cover}
+ .reference-home .gallery-caption{position:static;margin:0;font-size:calc(18 * var(--u));line-height:1.2}
+ .reference-home .slider-controls{flex:none;margin:0;min-height:35px}
+ .reference-home .faq{padding-bottom:100px}
+ #footer .footer-inner{min-height:calc(540 * var(--fu))}
+ #footer .footer-bottom{max-width:calc(300 * var(--fu))}
+ #footer .footer-parent{font-size:calc(10 * var(--fu));line-height:calc(17 * var(--fu));margin-top:calc(3 * var(--fu))}
+ #footer .footer-bottom .footer-preview{font-size:calc(8 * var(--fu));margin-top:calc(4 * var(--fu))}
+}
+@media(max-width:350px){.header-inner{gap:11px;padding-inline:13px}.header-inner .subbrand-name{font-size:17px}.header-inner .subbrand-script{font-size:23px}}

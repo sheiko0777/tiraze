@@ -1,0 +1,326 @@
+[
+  {
+    "check": "File index.html",
+    "passed": true
+  },
+  {
+    "check": "File styles.css",
+    "passed": true
+  },
+  {
+    "check": "File refinement.css",
+    "passed": true
+  },
+  {
+    "check": "File reference-match.css",
+    "passed": true
+  },
+  {
+    "check": "File subbrand.css",
+    "passed": true
+  },
+  {
+    "check": "File app.js",
+    "passed": true
+  },
+  {
+    "check": "File data.js",
+    "passed": true
+  },
+  {
+    "check": "File serve.py",
+    "passed": true
+  },
+  {
+    "check": "File assets/editorial-fonts.css",
+    "passed": true
+  },
+  {
+    "check": "File assets/reference-fonts.css",
+    "passed": true
+  },
+  {
+    "check": "File assets/brand-fonts.css",
+    "passed": true
+  },
+  {
+    "check": "File assets/hero.mp4",
+    "passed": true
+  },
+  {
+    "check": "File integration/shopify/irth-collectibles-entry.liquid",
+    "passed": true
+  },
+  {
+    "check": "Image hero",
+    "passed": true
+  },
+  {
+    "check": "Image carpet",
+    "passed": true
+  },
+  {
+    "check": "Image beads",
+    "passed": true
+  },
+  {
+    "check": "Image pendant",
+    "passed": true
+  },
+  {
+    "check": "Image keyring",
+    "passed": true
+  },
+  {
+    "check": "Image craft",
+    "passed": true
+  },
+  {
+    "check": "Image architecture",
+    "passed": true
+  },
+  {
+    "check": "Image safaa",
+    "passed": true
+  },
+  {
+    "check": "Image rawda",
+    "passed": true
+  },
+  {
+    "check": "Image silk-editorial",
+    "passed": true
+  },
+  {
+    "check": "Image silk-detail",
+    "passed": true
+  },
+  {
+    "check": "JavaScript syntax app.js",
+    "passed": true
+  },
+  {
+    "check": "JavaScript syntax data.js",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/liana.woff",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/editorial-font-3.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/irth-thmanyah-serif.otf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/editorial-font-5.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/editorial-font-0.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/raleway-regular.woff",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/raleway-medium.woff",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/irth-sakkal-seta.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/editorial-font-4.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/editorial-font-1.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/editorial-font-2.ttf",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/ttdrugs-regular.woff",
+    "passed": true
+  },
+  {
+    "check": "Local font /assets/irth-a-suls.ttf",
+    "passed": true
+  },
+  {
+    "check": "No Jannat brand or Russian source text in deliverable",
+    "passed": true
+  },
+  {
+    "check": "No external image, script or style resources",
+    "passed": true
+  },
+  {
+    "check": "External links use official parent or partner domains",
+    "passed": true
+  },
+  {
+    "check": "Shopify entry schema has valid URL settings",
+    "passed": true
+  },
+  {
+    "check": "Partner and brand asset irth-logo-original.png",
+    "passed": true
+  },
+  {
+    "check": "Partner and brand asset rihal-kaaba.jpg",
+    "passed": true
+  },
+  {
+    "check": "Partner and brand asset rihal-kaaba-box.jpg",
+    "passed": true
+  },
+  {
+    "check": "Partner and brand asset rihal-uhud.jpg",
+    "passed": true
+  },
+  {
+    "check": "Partner and brand asset rihal-salam.jpg",
+    "passed": true
+  },
+  {
+    "check": "Hero video 1920x1080",
+    "passed": true
+  },
+  {
+    "check": "HTTP /",
+    "passed": true
+  },
+  {
+    "check": "HTTP /catalog",
+    "passed": true
+  },
+  {
+    "check": "HTTP /collections/silk",
+    "passed": true
+  },
+  {
+    "check": "HTTP /collections/beads",
+    "passed": true
+  },
+  {
+    "check": "HTTP /collections/kiswah",
+    "passed": true
+  },
+  {
+    "check": "HTTP /collections/gifts",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/noor-silk",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/safaa-silk",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/rawda-silk",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/uhud-beads",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/kiswah-pendant",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/kiswah-keyring",
+    "passed": true
+  },
+  {
+    "check": "HTTP /about",
+    "passed": true
+  },
+  {
+    "check": "HTTP /concierge",
+    "passed": true
+  },
+  {
+    "check": "HTTP /gifting",
+    "passed": true
+  },
+  {
+    "check": "HTTP /buyers",
+    "passed": true
+  },
+  {
+    "check": "HTTP /journal",
+    "passed": true
+  },
+  {
+    "check": "HTTP /journal/the-language-of-silk",
+    "passed": true
+  },
+  {
+    "check": "HTTP /journal/a-record-that-remains",
+    "passed": true
+  },
+  {
+    "check": "HTTP /journal/the-art-of-giving",
+    "passed": true
+  },
+  {
+    "check": "HTTP /provenance",
+    "passed": true
+  },
+  {
+    "check": "HTTP /contact",
+    "passed": true
+  },
+  {
+    "check": "HTTP /care",
+    "passed": true
+  },
+  {
+    "check": "HTTP /privacy",
+    "passed": true
+  },
+  {
+    "check": "HTTP /terms",
+    "passed": true
+  },
+  {
+    "check": "HTTP /favorites",
+    "passed": true
+  },
+  {
+    "check": "HTTP /request",
+    "passed": true
+  },
+  {
+    "check": "HTTP /collections/rihal",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/rihal-kaaba-door",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/rihal-uhud-necklace",
+    "passed": true
+  },
+  {
+    "check": "HTTP /products/rihal-salam-beads",
+    "passed": true
+  },
+  {
+    "check": "HTTP /pages/collectibles",
+    "passed": true
+  }
+]

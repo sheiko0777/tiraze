@@ -1,0 +1,45 @@
+{% comment %}
+  Parent-store entry section. Copy this file to sections/ and both wordmark fonts to assets/.
+  The destination is configured in the editor. This is an entry card, not the subbrand storefront.
+{% endcomment %}
+{% assign ic_arabic = false %}
+{% if request.locale.iso_code == 'ar' %}{% assign ic_arabic = true %}{% endif %}
+<section class="ic-entry ic-entry--{{ section.id }}" {% if ic_arabic %}dir="rtl"{% endif %} aria-label="IRTH Collectibles">
+  {% if section.settings.image != blank %}
+    {{ section.settings.image | image_url: width: 2000 | image_tag: class: 'ic-entry__image', loading: 'lazy', sizes: '100vw', widths: '600,900,1200,1600,2000' }}
+  {% endif %}
+  <div class="ic-entry__content">
+    <p class="ic-entry__parent">{% if ic_arabic %}عالم من المقتنيات، من بيت إرث{% else %}A world of considered objects, by IRTH HOUSE{% endif %}</p>
+    <h2 class="ic-entry__wordmark" dir="ltr"><span>IRTH</span><em>Collectibles</em></h2>
+    <p class="ic-entry__copy">{% if ic_arabic %}حرير تنسجه الأيدي، ومقتنيات تحمل حكاية. قطع نختارها لتُقتنى وتُورث.{% else %}Handwoven silk and objects with a story. Pieces chosen to be treasured, and passed on.{% endif %}</p>
+    {% if section.settings.destination != blank %}
+      <a class="ic-entry__link" href="{{ section.settings.destination }}">{% if ic_arabic %}اكتشف إرث مقتنيات{% else %}Explore IRTH Collectibles{% endif %}</a>
+    {% endif %}
+  </div>
+</section>
+{% style %}
+  @font-face{font-family:'IRTH Collectibles Signature';src:url('{{ "liana.woff" | asset_url }}') format('woff');font-display:swap;font-weight:400;font-style:normal}
+  @font-face{font-family:'IRTH Collectibles Wordmark';src:url('{{ "ttdrugs-regular.woff" | asset_url }}') format('woff');font-display:swap;font-weight:400;font-style:normal}
+  .ic-entry--{{ section.id }}{position:relative;min-height:530px;display:grid;place-items:center;overflow:hidden;background:#0b1320;color:#f5f1e8;text-align:center;padding:70px 24px;isolation:isolate}
+  .ic-entry--{{ section.id }} .ic-entry__image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+  .ic-entry--{{ section.id }}::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0b132075,#0b1320b5);z-index:-1}
+  .ic-entry--{{ section.id }} .ic-entry__content{max-width:560px}
+  .ic-entry--{{ section.id }} .ic-entry__parent{font:inherit;font-size:12px;line-height:1.6;margin:0 0 24px;color:inherit}
+  .ic-entry--{{ section.id }} .ic-entry__wordmark{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:0 0 25px;color:inherit;line-height:1.2}
+  .ic-entry--{{ section.id }} .ic-entry__wordmark>span{font-family:'IRTH Collectibles Wordmark',serif;font-size:42px;letter-spacing:6px;font-weight:400}
+  .ic-entry--{{ section.id }} .ic-entry__wordmark>em{font:400 52px/1.2 'IRTH Collectibles Signature',cursive;letter-spacing:0;text-transform:none}
+  .ic-entry--{{ section.id }} .ic-entry__copy{max-width:380px;margin:0 auto 32px;font-size:15px;line-height:1.9;color:inherit}
+  .ic-entry--{{ section.id }} .ic-entry__link{display:inline-block;padding:10px 0;color:inherit;font-size:13px;text-decoration:none;border-bottom:1px solid currentColor}
+  .ic-entry--{{ section.id }} .ic-entry__link:focus-visible{outline:2px solid currentColor;outline-offset:6px}
+  @media(max-width:749px){.ic-entry--{{ section.id }}{min-height:460px;padding:55px 22px}.ic-entry--{{ section.id }} .ic-entry__wordmark{gap:8px}.ic-entry--{{ section.id }} .ic-entry__wordmark>span{font-size:30px;letter-spacing:4px}.ic-entry--{{ section.id }} .ic-entry__wordmark>em{font-size:39px}.ic-entry--{{ section.id }} .ic-entry__copy{font-size:13px}}
+{% endstyle %}
+{% schema %}
+{
+  "name":"IRTH Collectibles entry",
+  "settings":[
+    {"type":"image_picker","id":"image","label":"Editorial image"},
+    {"type":"url","id":"destination","label":"Collectibles destination","info":"Select the Collectibles page after creating it."}
+  ],
+  "presets":[{"name":"IRTH Collectibles entry"}]
+}
+{% endschema %}
