@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.log
+*.pid
+.env
+.env.*
+!.env.example
+node_modules/
+*.zip
+.shopify/
+private/
+tools/assets.json
+tools/irth-live-source.html
+tools/irth-live-styles.css
