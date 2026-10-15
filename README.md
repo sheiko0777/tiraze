@@ -2,7 +2,7 @@
 
 Project foundation for **tiraze.net**, a luxury brand specializing in handmade silk rugs.
 
-Combines the latest published sheiko0777/jannat source, verified local media masters and TIRAZE design references. Upstream Git history is retained.
+Combines the latest published sheiko0777/jannat source, verified local media masters and TIRAZE design references. Upstream Git history is retained locally; GitHub receives a verified source snapshot through the connected API.
 
 ## Current stage
 

@@ -7,7 +7,7 @@
 - Destination: https://github.com/sheiko0777/tiraze
 - Local sources: sibling Irth-House and Tiraze-Concepts folders, plus original generated logo references.
 
-Retained upstream Git history. Only the new checkout's origin was changed to TIRAZE. The original IRTH project and repository were not changed.
+Upstream history is retained in the local checkout. The destination receives a verified source snapshot through the connected GitHub API because local Git authentication belongs to another account. Only the new checkout's origin was changed to TIRAZE. The original IRTH project and repository were not changed.
 
 ## Reconciliation
 
