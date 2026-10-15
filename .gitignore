@@ -12,3 +12,14 @@ private/
 tools/assets.json
 tools/irth-live-source.html
 tools/irth-live-styles.css
+
+# Restored media are reproducible from the tracked SHA-256 source-master parts.
+/assets/carpet.png
+/assets/hero.mp4
+/assets/hero.png
+/assets/keyring.png
+/assets/rawda.png
+/assets/rihal-kaaba-box.jpg
+/assets/safaa.png
+/assets/silk-detail.png
+/assets/silk-editorial.png
