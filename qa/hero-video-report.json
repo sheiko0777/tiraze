@@ -1,0 +1,7 @@
+{
+  "passed": [
+    "1440px: original film plays, loops muted inline; pause/resume; Tiraze wordmark",
+    "390px: original film plays, loops muted inline; pause/resume; Tiraze wordmark",
+    "Reduced motion: paused poster by default; manual play works"
+  ]
+}

@@ -1,8 +1,18 @@
-# TIRAZE — طيراز
+# TIRAZE — تيراز
 
 Project foundation for **tiraze.net**, a luxury brand specializing in handmade silk rugs.
 
 Combines the latest published sheiko0777/jannat source, verified local media masters and TIRAZE design references. Upstream Git history is retained locally and in the destination repository.
+
+## Engineering standards
+
+The Arabic name is **تيراز**. The commercial launch must include real online payments and orders. The current site is still a local preview.
+
+- [Engineering guidelines](docs/ENGINEERING-GUIDELINES.md)
+- [Launch gates](docs/LAUNCH-CHECKLIST.md)
+- [Current engineering baseline](docs/ENGINEERING-BASELINE.md)
+- [Review of supplied references](docs/REFERENCE-REVIEW.md)
+- [Architecture decision](docs/decisions/0001-commerce-launch-boundaries.md)
 
 ## Current stage
 

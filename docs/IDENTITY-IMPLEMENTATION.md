@@ -6,7 +6,7 @@ Implemented: header, homepage, mobile menu, footer, Arabic/English content, page
 
 Removed IRTH endorsement and non-rug products from the active experience. Legacy source and Shopify integration remain in history/reference files. No live store or DNS was changed. Requests remain local preview drafts.
 
-The original hero video includes the former brand's keepsakes, so this edition uses a newly generated still rug photograph. The original video is preserved with the inherited source masters.
+The original hero.mp4 is restored as the autoplaying, muted, looping, inline hero film, with Tiraze branding overlaid. The generated rug still is retained as its poster and as the reduced-motion/failure fallback. Pause/play controls and reduced-motion handling are preserved.
 
 ## Asset generation
 
@@ -24,3 +24,7 @@ The wordmark is a transparent raster asset used as a CSS mask for exact solid-co
 - Actual screenshots and browser report: qa/. These are implemented-site captures, distinct from the earlier generated brand/concepts images.
 
 Preview: http://localhost:8090
+
+## Hero video correction
+
+Restored the inherited hero.mp4 after user review. Three real-browser scenarios passed: desktop autoplay/pause/resume, mobile autoplay/pause/resume, and reduced-motion paused fallback with manual play. Latest captures: qa/hero-video-1440.png and qa/hero-video-390.png. The earlier homepage captures document the preceding still-image revision.

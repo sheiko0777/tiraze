@@ -145,7 +145,7 @@ export const faqs = [
   [
     "هل السجاد من الحرير الطبيعي ومنسوج يدوياً؟",
     "Are the rugs natural silk and hand knotted?",
-    "الحرير الطبيعي والعقد اليدوية هما أساس مجموعة طيراز. تُؤكد الخامة والمقاس وبلد النسج وكثافة العقد لكل سجادة قبل اعتماد الطلب.",
+    "الحرير الطبيعي والعقد اليدوية هما أساس مجموعة تيراز. تُؤكد الخامة والمقاس وبلد النسج وكثافة العقد لكل سجادة قبل اعتماد الطلب.",
     "Natural silk and hand knotting define the Tiraze collection. Material, dimensions, weaving origin and knot density are confirmed for each rug before your request is approved."
   ],
   [
@@ -185,7 +185,7 @@ export const articles = [
       [
         "الوقت جزء من القطعة",
         "Time is part of the piece",
-        "تبدأ السجادة بخيط، ثم عقدة، ثم إيقاع تكرره اليد. في طيراز، نقترب من تفاصيل النسيج وتدرجات الزخارف لنرى جمال هذه الحرفة.",
+        "تبدأ السجادة بخيط، ثم عقدة، ثم إيقاع تكرره اليد. في تيراز، نقترب من تفاصيل النسيج وتدرجات الزخارف لنرى جمال هذه الحرفة.",
         "A rug begins with a thread, a knot and a rhythm repeated by hand. At Tiraze, we look closely at the weave and changing tones to appreciate the craft."
       ],
       [
