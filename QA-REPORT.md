@@ -1,3 +1,7 @@
+# TIRAZE — 16 October 2026
+
+54/54 isolated rendering and interaction checks; 5/5 real Edge browser scenarios. See docs/IDENTITY-IMPLEMENTATION.md and qa/browser-report.json. Reports below are preserved IRTH history.
+
 # IRTH preview — validation record
 
 ## IRTH Collectibles subbrand revision — 16 September 2026

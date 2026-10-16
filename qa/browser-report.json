@@ -1,0 +1,10 @@
+{
+  "passed": [
+    "Homepage 1440px: assets, branding, 3 rugs and no overflow",
+    "Homepage 390px: assets, branding, 3 rugs and no overflow",
+    "Homepage 320px: assets, branding, 3 rugs and no overflow",
+    "Mobile menu → catalog → ivory filter → product → bag",
+    "English language and LTR layout"
+  ],
+  "errors": []
+}

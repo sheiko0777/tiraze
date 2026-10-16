@@ -6,14 +6,14 @@ Combines the latest published sheiko0777/jannat source, verified local media mas
 
 ## Current stage
 
-Source consolidation is complete. The runnable site remains the inherited **IRTH Collectibles** implementation. Applying TIRAZE branding, the rug-only catalog and content is the next stage. Images in brand/ are concepts, not implemented screenshots or production vector logos.
+TIRAZE identity is implemented across the bilingual site. The active catalog contains three silk rug concepts; navigation, stories, care content, storage, metadata and app icons use the new brand. See docs/IDENTITY-IMPLEMENTATION.md for changes and validation. Images in brand/ remain earlier design concepts; qa/ contains actual website screenshots.
 
 ## Approved identity
 
 - Wordmark: option 3, title-case **Tiraze**, warm serif lettering.
 - Secondary signature: **Silk Rugs**, small and subordinate.
 - Navy: #101C2E. Ivory: #F5F1E8. Muted gold: #B49A6A.
-- Favicon/app concept: navy field with light T derived from the selected lettering. Final exports still need to be drawn.
+- Favicon/app icons: navy field with a simplified ivory T; SVG plus 192px, 512px and Apple 180px PNG exports.
 - Domain: tiraze.net, shown separately from the primary wordmark.
 
 The selected wordmark reference is burgundy because it predates the navy decision; navy supersedes its sample color.
@@ -26,7 +26,7 @@ Open http://localhost:8090. The server restores original media from tracked part
 
 ## Files
 
-- app.js, data.js, index.html, styles and assets/: inherited website.
+- app.js, data.js, index.html, tiraze.css and assets/: implemented TIRAZE website.
 - assets/source-masters/: original media parts with SHA-256 manifest.
 - brand/concepts/: four homepage concepts and generation notes.
 - brand/selected-wordmark-reference.png: chosen lettering and icon concept board.
@@ -38,6 +38,8 @@ Open http://localhost:8090. The server restores original media from tracked part
 ## Checks
 
     node tools/check_interactions.mjs
+
+54 isolated checks pass. Real browser verification uses tools/check_browser.cjs with Playwright available; 5 scenarios passed in Edge at desktop and mobile sizes. Browser screenshots and report are in qa/.
 
 The inherited tools/verify.py contains IRTH-specific expectations and assumes port 8088. Historical reports remain baseline evidence, not new TIRAZE validation.
 

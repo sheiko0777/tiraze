@@ -19,7 +19,7 @@ const run=code=>vm.runInContext(code,context);
 const check=(label,fn)=>{fn();checks.push(label)};
 const click=dataset=>listeners.click({target:{closest:s=>s==='button'?{dataset}:null},button:0});
 const allProducts=run('products');
-check('Nine distinct products across five collections',()=>{assert.equal(allProducts.length,9);assert.equal(new Set(allProducts.map(p=>p.id)).size,9);assert.equal(run('Object.keys(collections).length'),5)});
+check('Three silk rugs across three edits',()=>{assert.equal(allProducts.length,3);assert.equal(new Set(allProducts.map(p=>p.id)).size,3);assert.equal(run('Object.keys(collections).length'),3)});
 for(const language of ['ar','en']){
  run(`lang='${language}'`);
  for(const p of allProducts){
@@ -33,17 +33,18 @@ for(const language of ['ar','en']){
   });
  }
  for(const route of ['/','/catalog','/about','/concierge','/gifting','/buyers','/journal','/provenance','/contact','/care','/privacy','/terms','/favorites','/request',...run('Object.keys(collections)').map(id=>'/collections/'+id),...run('articles.map(a=>a.id)').map(id=>'/journal/'+id)]){
-  check(`${language}: render ${route}`,()=>{location.pathname=route;run('render(false)');const html=elements.get('#main').innerHTML;assert.ok(html.length>100);assert.ok(!html.includes('undefined'));assert.ok(!html.includes(language==='ar'?'الصفحة المطلوبة غير موجودة':'The requested page could not be found'))});
+  check(`${language}: render ${route}`,()=>{location.pathname=route;run('render(false)');const html=elements.get('#main').innerHTML;assert.ok(html.length>100);assert.ok(!html.includes('undefined'));assert.ok(!/IRTH|RIHAL|رحال|إرث|كسوة/.test(html));assert.ok(!html.includes(language==='ar'?'الصفحة المطلوبة غير موجودة':'The requested page could not be found'))});
  }
- check(`${language}: global search finds partner piece`,()=>{elements.get('#site-search').value=language==='ar'?'رحال':'RIHAL';run('searchResults()');const html=elements.get('#search-results').innerHTML;for(const p of allProducts.filter(p=>p.partner))assert.ok(html.includes('/products/'+p.id));assert.ok(!html.includes('/products/noor-silk'))});
+ check(`${language}: search finds the requested rug`,()=>{elements.get('#site-search').value='Safaa';run('searchResults()');const html=elements.get('#search-results').innerHTML;assert.ok(html.includes('/products/safaa-silk'));assert.ok(!html.includes('/products/noor-silk'))});
 }
-check('Partner collection filter and query combine correctly',()=>{
- elements.set('[data-catalog]',{dataset:{catalog:'rihal'}});elements.set('#catalog-search',{value:'Uhud'});elements.set('#sort',{value:'curated'});elements.set('#catalog-items',element());location.pathname='/collections/rihal';run('updateCatalog()');const html=elements.get('#catalog-items').innerHTML;assert.ok(html.includes('/products/rihal-uhud-necklace'));assert.ok(!html.includes('/products/uhud-beads'));elements.delete('[data-catalog]');
+check('Collection filter and query combine correctly',()=>{
+ elements.set('[data-catalog]',{dataset:{catalog:'navy'}});elements.set('#catalog-search',{value:'Noor'});elements.set('#sort',{value:'curated'});elements.set('#catalog-items',element());location.pathname='/collections/navy';run('updateCatalog()');const html=elements.get('#catalog-items').innerHTML;assert.ok(html.includes('/products/noor-silk'));assert.ok(!html.includes('/products/safaa-silk'));elements.delete('[data-catalog]');
 });
-check('Partner bag item preserves image, quantity and removal',()=>{
- click({add:'rihal-kaaba-door'});click({add:'rihal-kaaba-door'});assert.equal(JSON.parse(storage.get('irth-bag'))[0].qty,2);assert.ok(elements.get('#overlay').innerHTML.includes('rihal-kaaba-box.jpg'));click({remove:'0'});assert.deepEqual(JSON.parse(storage.get('irth-bag')),[]);
+check('Rug bag item preserves image, quantity and removal',()=>{
+ click({add:'noor-silk'});click({add:'noor-silk'});assert.equal(JSON.parse(storage.get('tiraze-bag'))[0].qty,2);assert.ok(elements.get('#overlay').innerHTML.includes('carpet.webp'));click({remove:'0'});assert.deepEqual(JSON.parse(storage.get('tiraze-bag')),[]);
 });
-check('Language switch persists English and Arabic',()=>{run("lang='ar'");click({action:'language'});assert.equal(JSON.parse(storage.get('irth-lang')),'en');assert.equal(run('document.documentElement.dir'),'ltr');click({action:'language'});assert.equal(run('document.documentElement.dir'),'rtl')});
-check('Mobile menu exposes global search and partner collection',()=>{click({action:'menu'});const html=elements.get('#overlay').innerHTML;assert.ok(html.includes('data-action="search"'));assert.ok(html.includes('/collections/rihal'))});
+check('Tiraze storage does not overwrite the original brand',()=>{assert.ok(![...storage.keys()].some(k=>k.startsWith('irth-')))});
+check('Language switch persists English and Arabic',()=>{run("lang='ar'");click({action:'language'});assert.equal(JSON.parse(storage.get('tiraze-lang')),'en');assert.equal(run('document.documentElement.dir'),'ltr');click({action:'language'});assert.equal(run('document.documentElement.dir'),'rtl')});
+check('Mobile menu exposes search and silk rug navigation',()=>{click({action:'menu'});const html=elements.get('#overlay').innerHTML;assert.ok(html.includes('data-action="search"'));assert.ok(html.includes('/care'))});
 fs.writeFileSync(path.join(root,'interaction-verification.json'),JSON.stringify({method:'Isolated JavaScript document/storage doubles; no browser layout verification',passed:checks.length,checks},null,2));
 console.log(`PASS ${checks.length} rendering and interaction checks; no real browser storage modified.`);

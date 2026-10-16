@@ -19,5 +19,5 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__=='__main__':
     runpy.run_path(str(ROOT / 'tools' / 'restore_large_assets.py'))
     port=int(sys.argv[1]) if len(sys.argv)>1 else 8088
-    print(f'IRTH HOUSE: http://localhost:{port}',flush=True)
+    print(f'TIRAZE: http://localhost:{port}',flush=True)
     ThreadingHTTPServer(('127.0.0.1',port),Handler).serve_forever()
