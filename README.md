@@ -10,6 +10,7 @@ The Arabic name is **تيراز**. The commercial launch must include real onlin
 
 - [Engineering guidelines](docs/ENGINEERING-GUIDELINES.md)
 - [Full implementation plan](docs/IMPLEMENTATION-PLAN.md)
+- [Implementation status and verified checks](docs/IMPLEMENTATION-STATUS.md)
 - [Custom Egypt commerce decision](docs/decisions/0002-custom-egypt-commerce.md)
 - [Launch gates](docs/LAUNCH-CHECKLIST.md)
 - [Current engineering baseline](docs/ENGINEERING-BASELINE.md)
@@ -17,6 +18,8 @@ The Arabic name is **تيراز**. The commercial launch must include real onlin
 - [Architecture decision](docs/decisions/0001-commerce-launch-boundaries.md)
 
 ## Current stage
+
+The custom commerce foundation is partially implemented in `packages/` with local D1 reservation tests and initial data/payment services. `apps/web/` is incomplete and is not a runnable storefront yet. See the implementation status for exact checks, open review findings and continuation steps. The commands below still describe the independent legacy preview.
 
 TIRAZE identity is implemented across the bilingual site. The active catalog contains three silk rug concepts; navigation, stories, care content, storage, metadata and app icons use the new brand. See docs/IDENTITY-IMPLEMENTATION.md for changes and validation. Images in brand/ remain earlier design concepts; qa/ contains actual website screenshots.
 

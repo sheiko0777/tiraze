@@ -1,0 +1,30 @@
+{
+  "name": "tiraze",
+  "private": true,
+  "description": "Tiraze / تيراز — custom Egypt-first silk rug commerce (Astro + Cloudflare Workers + D1). The legacy static preview remains at the repository root.",
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --parallel run typecheck",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "node tests/e2e/run-e2e.mjs",
+    "build": "pnpm --filter @tiraze/web build && pnpm --filter @tiraze/jobs build",
+    "dev": "pnpm --filter @tiraze/web dev",
+    "db:migrate:local": "pnpm --filter @tiraze/web exec wrangler d1 migrations apply DB --local",
+    "db:seed:fixtures:local": "pnpm --filter @tiraze/web exec wrangler d1 execute DB --local --file ../../packages/db/fixtures/test-fixtures.sql",
+    "preview:legacy": "python serve.py"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261016.1",
+    "@types/node": "26.6.5",
+    "miniflare": "4.20260730.0",
+    "query-string": "9.5.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.12"
+  }
+}

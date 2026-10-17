@@ -1,0 +1,27 @@
+{
+  "name": "@tiraze/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tiraze storefront, account, checkout and staff administration (Astro SSR on Cloudflare Workers).",
+  "scripts": {
+    "sync-assets": "node scripts/sync-assets.mjs",
+    "dev": "node scripts/sync-assets.mjs && astro dev",
+    "build": "node scripts/sync-assets.mjs && astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "14.4.0",
+    "@tiraze/core": "workspace:*",
+    "@tiraze/db": "workspace:*",
+    "astro": "7.4.0",
+    "better-auth": "1.7.10"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.3",
+    "wrangler": "4.151.1"
+  }
+}
