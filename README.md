@@ -9,6 +9,8 @@ Combines the latest published sheiko0777/jannat source, verified local media mas
 The Arabic name is **تيراز**. The commercial launch must include real online payments and orders. The current site is still a local preview.
 
 - [Engineering guidelines](docs/ENGINEERING-GUIDELINES.md)
+- [Full implementation plan](docs/IMPLEMENTATION-PLAN.md)
+- [Custom Egypt commerce decision](docs/decisions/0002-custom-egypt-commerce.md)
 - [Launch gates](docs/LAUNCH-CHECKLIST.md)
 - [Current engineering baseline](docs/ENGINEERING-BASELINE.md)
 - [Review of supplied references](docs/REFERENCE-REVIEW.md)
