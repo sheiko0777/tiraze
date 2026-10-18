@@ -1,0 +1,16 @@
+{
+  "name": "@tiraze/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure Tiraze commerce rules: money, Egypt addresses, shipping, COD, order state machines, Kashier signature/client, input contracts and CSV import validation. No database or framework imports.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

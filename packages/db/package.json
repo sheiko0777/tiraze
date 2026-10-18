@@ -1,0 +1,16 @@
+{
+  "name": "@tiraze/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "D1 schema migrations, repositories and commerce use-cases (checkout, reservations, payments inbox, outbox, admin operations) shared by the web app and the jobs worker.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tiraze/core": "workspace:*"
+  }
+}

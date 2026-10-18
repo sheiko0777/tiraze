@@ -10,6 +10,7 @@ The Arabic name is **تيراز**. The commercial launch must include real onlin
 
 - [Engineering guidelines](docs/ENGINEERING-GUIDELINES.md)
 - [Full implementation plan](docs/IMPLEMENTATION-PLAN.md)
+- [Implementation status and verified checks](docs/IMPLEMENTATION-STATUS.md)
 - [Custom Egypt commerce decision](docs/decisions/0002-custom-egypt-commerce.md)
 - [Launch gates](docs/LAUNCH-CHECKLIST.md)
 - [Current engineering baseline](docs/ENGINEERING-BASELINE.md)
@@ -17,6 +18,18 @@ The Arabic name is **تيراز**. The commercial launch must include real onlin
 - [Architecture decision](docs/decisions/0001-commerce-launch-boundaries.md)
 
 ## Current stage
+
+The custom commerce application now runs locally: bilingual Astro SSR storefront, verified accounts/TOTP, server cart, guarded order/payment/inventory services, staff workflows and a jobs worker. Checkout and mail are closed by default. This is a development implementation, not a merchant-verified production release. See [status and evidence](docs/IMPLEMENTATION-STATUS.md).
+
+~~~powershell
+pnpm install --frozen-lockfile
+pnpm setup:local
+pnpm dev
+~~~
+
+Open the printed local URL, normally http://localhost:4321/ar. For the built preview run pnpm build, then pnpm --filter @tiraze/web preview --host 127.0.0.1 --port 4330. Details: [local setup](docs/runbooks/local-development.md), [operations](docs/runbooks/operations.md), [catalogue import](docs/runbooks/catalog-import.md), [backup/restore](docs/runbooks/backup-restore.md), [implementation ADR](docs/decisions/0003-local-commerce-implementation.md).
+
+Run pnpm typecheck, pnpm test and pnpm build. With the built preview running on port 4330, pnpm test:e2e exercises the actual browser. No remote resources or paid plans are provisioned by these commands. The following preview remains independent.
 
 TIRAZE identity is implemented across the bilingual site. The active catalog contains three silk rug concepts; navigation, stories, care content, storage, metadata and app icons use the new brand. See docs/IDENTITY-IMPLEMENTATION.md for changes and validation. Images in brand/ remain earlier design concepts; qa/ contains actual website screenshots.
 
@@ -30,7 +43,7 @@ TIRAZE identity is implemented across the bilingual site. The active catalog con
 
 The selected wordmark reference is burgundy because it predates the navy decision; navy supersedes its sample color.
 
-## Local preview
+## Legacy local preview
 
     python -X utf8 serve.py 8090
 
@@ -38,7 +51,9 @@ Open http://localhost:8090. The server restores original media from tracked part
 
 ## Files
 
-- app.js, data.js, index.html, tiraze.css and assets/: implemented TIRAZE website.
+- apps/web/: SSR storefront, account and staff application; apps/jobs/: scheduled worker.
+- packages/core/ and packages/db/: validated rules, data services, migrations and test fixtures.
+- app.js, data.js, index.html, tiraze.css and assets/: preserved legacy identity preview and editorial source.
 - assets/source-masters/: original media parts with SHA-256 manifest.
 - brand/concepts/: four homepage concepts and generation notes.
 - brand/selected-wordmark-reference.png: chosen lettering and icon concept board.

@@ -1,0 +1,121 @@
+---
+import '../styles/commerce.css';
+import { env } from 'cloudflare:workers';
+const {
+  locale = 'ar',
+  title = 'Tiraze — تيراز',
+  description = 'سجاد حرير يدوي من تيراز',
+  alternate,
+  structuredData,
+} = Astro.props;
+const t = (ar: string, en: string) => (locale === 'ar' ? ar : en);
+const prefix = '/' + locale;
+---
+
+<!doctype html>
+<html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101c2e" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, 'https://tiraze.net').href} />
+    <meta property="og:image" content="https://tiraze.net/assets/tiraze-hero.png" />
+    {((env as { ENVIRONMENT?: string }).ENVIRONMENT !== 'production' ||
+      /\/(account|cart|checkout|orders|admin)(\/|$)/.test(Astro.url.pathname)) && (
+      <meta name="robots" content="noindex,nofollow" />
+    )}
+    {structuredData && (
+      <script
+        type="application/ld+json"
+        set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')}
+      />
+    )}
+    <link rel="canonical" href={new URL(Astro.url.pathname, 'https://tiraze.net').href} />
+    <link rel="icon" href="/assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/assets/editorial-fonts.css" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/refinement.css" />
+    <link rel="stylesheet" href="/assets/reference-fonts.css" />
+    <link rel="stylesheet" href="/assets/brand-fonts.css" />
+    <link rel="stylesheet" href="/reference-match.css" />
+    <link rel="stylesheet" href="/subbrand.css" />
+    <link rel="stylesheet" href="/tiraze.css" />
+    <link
+      rel="alternate"
+      hreflang={locale === 'ar' ? 'en' : 'ar'}
+      href={new URL(alternate ?? '/' + (locale === 'ar' ? 'en' : 'ar'), 'https://tiraze.net').href}
+    />
+  </head>
+  <body>
+    <a class="skip" href="#main">
+      {t('انتقل إلى المحتوى', 'Skip to content')}
+    </a>
+    <header id="header">
+      <div class="header-inner">
+        <nav class="nav-group" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
+          <a href={prefix + '/catalog'}>{t('المجموعة', 'Collection')}</a>
+          <a href={prefix + '/about'}>{t('حكايتنا', 'Our story')}</a>
+          <a href={prefix + '/quote'}>{t('حسب الطلب', 'Bespoke')}</a>
+        </nav>
+        <a class="brand" href={prefix} aria-label="Tiraze">
+          <span class="subbrand-lockup" dir="ltr">
+            <span class="tiraze-wordmark" role="img" aria-label="Tiraze"></span>
+            <span class="subbrand-script">Silk Rugs</span>
+          </span>
+        </a>
+        <nav class="nav-group end" aria-label={t('الحساب واللغة', 'Account and language')}>
+          <a href={prefix + '/account'}>{t('حسابي', 'Account')}</a>
+          <a href={prefix + '/cart'}>{t('الحقيبة', 'Bag')}</a>
+          <a
+            href={alternate ?? '/' + (locale === 'ar' ? 'en' : 'ar')}
+            lang={locale === 'ar' ? 'en' : 'ar'}
+          >
+            {t('EN', 'عربي')}
+          </a>
+        </nav>
+        <button
+          class="commerce-mobile-toggle"
+          data-menu
+          aria-controls="mobile-navigation"
+          aria-expanded="false"
+          aria-label={t('فتح قائمة التنقل', 'Open navigation')}
+        >
+          ☰
+        </button>
+        <a class="commerce-mobile-bag" href={prefix + '/cart'} aria-label={t('الحقيبة', 'Bag')}>
+          {t('الحقيبة', 'Bag')}
+        </a>
+      </div>
+      <nav
+        id="mobile-navigation"
+        class="commerce-mobile-navigation"
+        aria-label={t('قائمة الموبايل', 'Mobile navigation')}
+        hidden
+      >
+        <a href={prefix + '/catalog'}>{t('المجموعة', 'Collection')}</a>
+        <a href={prefix + '/about'}>{t('حكايتنا', 'Our story')}</a>
+        <a href={prefix + '/quote'}>{t('حسب الطلب', 'Bespoke')}</a>
+        <a href={prefix + '/account'}>{t('حسابي', 'Account')}</a>
+        <a href={prefix + '/cart'}>{t('الحقيبة', 'Bag')}</a>
+        <a href={alternate ?? '/' + (locale === 'ar' ? 'en' : 'ar')}>{t('English', 'العربية')}</a>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="commerce-footer">
+      <a href={prefix + '/care'}>{t('العناية بالسجاد', 'Care guide')}</a>
+      <a href={prefix + '/quote'}>{t('تواصل مع تيراز', 'Contact Tiraze')}</a>
+      <span>© {new Date().getUTCFullYear()} TIRAZE · tiraze.net</span>
+    </footer>
+    <div id="notice" class="commerce-notice" role="status" aria-live="polite"></div>
+    <script src="../scripts/store.ts"></script>
+  </body>
+</html>

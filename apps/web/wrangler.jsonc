@@ -1,0 +1,26 @@
+{
+  "name": "tiraze-web",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./build",
+    "binding": "ASSETS",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tiraze-local",
+      "database_id": "00000000-0000-0000-0000-000000000001",
+      "migrations_dir": "../../packages/db/migrations",
+    },
+  ],
+  "vars": {
+    "APP_URL": "http://localhost:4321",
+    "ENVIRONMENT": "development",
+    "FIXTURES_VISIBLE": "false",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}

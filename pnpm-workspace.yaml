@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Native build scripts allowed explicitly (pnpm 10 blocks lifecycle scripts by default).
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd

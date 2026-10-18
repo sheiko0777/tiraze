@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-18",
+  "environment": "Windows, Node 26.8.1, pnpm 10.30.3; local Miniflare D1; built Workers preview",
+  "typecheck": {
+    "passed": true,
+    "errors": 0,
+    "warnings": 0,
+    "hints": 0
+  },
+  "webBuild": "passed",
+  "jobsBuild": "wrangler dry-run passed; no deploy",
+  "browser": {
+    "environment": "Local built Astro Workers preview + headless Chromium/Edge; no real payment or email",
+    "results": [
+      "ar 1440px: SSR identity/video/reduced motion/no overflow",
+      "ar 390px: SSR identity/video/reduced motion/no overflow",
+      "ar 320px: SSR identity/video/reduced motion/no overflow",
+      "en 1440px: SSR identity/video/reduced motion/no overflow",
+      "en 390px: SSR identity/video/reduced motion/no overflow",
+      "en 320px: SSR identity/video/reduced motion/no overflow",
+      "Original hero video is served as MP4 bytes",
+      "Anonymous checkout and cross-origin API/auth blocked",
+      "Bespoke enquiry durably submitted without payment",
+      "Unknown routes return HTTP 404"
+    ],
+    "errors": []
+  },
+  "legacyRenderingChecks": 54,
+  "foundationRulesAndOfficialHmacVector": "passed",
+  "productionDependencyAudit": "no known vulnerabilities reported by pnpm audit --prod",
+  "notVerified": [
+    "merchant sandbox/live API",
+    "remote D1/Workers CPU and load",
+    "real email/alerts",
+    "remote independent backup restore",
+    "Safari/Firefox/manual WCAG audit",
+    "merchant content, contracts and UAT"
+  ],
+  "tests": {
+    "passed": 37,
+    "files": 10,
+    "scope": "Node + local Miniflare/D1; provider mocked; includes concurrent distinct successful attempts and selected extra-charge refund"
+  },
+  "localMigrations": {
+    "applied": 10,
+    "remote": false
+  }
+}

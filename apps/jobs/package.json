@@ -1,0 +1,17 @@
+{
+  "name": "@tiraze/jobs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tiraze/core": "workspace:*",
+    "@tiraze/db": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1",
+    "typescript": "6.0.3"
+  }
+}
