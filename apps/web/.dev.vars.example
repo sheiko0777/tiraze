@@ -1,0 +1,9 @@
+# Copy to .dev.vars or run node tools/init-local.mjs from the repository root.
+# Use a unique cryptographically random value for every environment. Never commit real secrets.
+AUTH_SECRET=replace-with-a-random-secret-of-at-least-32-characters
+# Optional local fixtures only; never enable in production.
+# FIXTURES_VISIBLE=true
+# KASHIER_MODE=test
+# KASHIER_MERCHANT_ID=
+# KASHIER_API_KEY=
+# KASHIER_SECRET_KEY=

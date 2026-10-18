@@ -35,7 +35,11 @@ export interface Cart {
 }
 
 export async function getCart(db: Db, userId: string, locale: Locale): Promise<Cart> {
-  const cart = await first<{ version: number }>(db, 'SELECT version FROM carts WHERE user_id = ?', userId);
+  const cart = await first<{ version: number }>(
+    db,
+    'SELECT version FROM carts WHERE user_id = ?',
+    userId,
+  );
   const rows = await all<{
     sku_id: string;
     qty: number;
@@ -101,7 +105,9 @@ export async function getCart(db: Db, userId: string, locale: Locale): Promise<C
   return {
     version: cart?.version ?? 0,
     lines,
-    subtotalPiastres: lines.length ? addPiastres(...lines.filter((l) => !l.issue).map((l) => l.lineTotalPiastres)) : 0,
+    subtotalPiastres: lines.length
+      ? addPiastres(...lines.filter((l) => !l.issue).map((l) => l.lineTotalPiastres))
+      : 0,
     hasIssues: lines.some((l) => l.issue !== null),
   };
 }
@@ -119,16 +125,27 @@ async function maxQtyFor(db: Db, skuId: string): Promise<number | null> {
 
 function touchCart(db: Db, userId: string, now: number) {
   return db
-    .prepare(`INSERT INTO carts (user_id, version, updated_at) VALUES (?, 1, ?) ON CONFLICT(user_id) DO UPDATE SET version = version + 1, updated_at = excluded.updated_at`)
+    .prepare(
+      `INSERT INTO carts (user_id, version, updated_at) VALUES (?, 1, ?) ON CONFLICT(user_id) DO UPDATE SET version = version + 1, updated_at = excluded.updated_at`,
+    )
     .bind(userId, now);
 }
 
 export type CartMutation = { ok: true } | { ok: false; code: 'sku_unavailable' };
 
 /** Sets an absolute quantity (0 removes). Unique pieces are capped at one. */
-export async function setCartItem(db: Db, userId: string, skuId: string, qty: number, now: number): Promise<CartMutation> {
+export async function setCartItem(
+  db: Db,
+  userId: string,
+  skuId: string,
+  qty: number,
+  now: number,
+): Promise<CartMutation> {
   if (qty <= 0) {
-    await db.batch([touchCart(db, userId, now), db.prepare('DELETE FROM cart_items WHERE user_id = ? AND sku_id = ?').bind(userId, skuId)]);
+    await db.batch([
+      touchCart(db, userId, now),
+      db.prepare('DELETE FROM cart_items WHERE user_id = ? AND sku_id = ?').bind(userId, skuId),
+    ]);
     return { ok: true };
   }
   const max = await maxQtyFor(db, skuId);
@@ -136,7 +153,9 @@ export async function setCartItem(db: Db, userId: string, skuId: string, qty: nu
   await db.batch([
     touchCart(db, userId, now),
     db
-      .prepare(`INSERT INTO cart_items (user_id, sku_id, qty, added_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, sku_id) DO UPDATE SET qty = excluded.qty`)
+      .prepare(
+        `INSERT INTO cart_items (user_id, sku_id, qty, added_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, sku_id) DO UPDATE SET qty = excluded.qty`,
+      )
       .bind(userId, skuId, Math.min(qty, max), now),
   ]);
   return { ok: true };
@@ -147,7 +166,12 @@ export async function setCartItem(db: Db, userId: string, skuId: string, qty: nu
  * (never the sum, so a refresh cannot double quantities), capped by the SKU's limit.
  * Unknown or unpurchasable SKUs are dropped and reported.
  */
-export async function mergeCart(db: Db, userId: string, items: Array<{ skuId: string; qty: number }>, now: number): Promise<{ dropped: string[] }> {
+export async function mergeCart(
+  db: Db,
+  userId: string,
+  items: Array<{ skuId: string; qty: number }>,
+  now: number,
+): Promise<{ dropped: string[] }> {
   const dropped: string[] = [];
   const stmts = [touchCart(db, userId, now)];
   const seen = new Set<string>();
@@ -173,5 +197,8 @@ export async function mergeCart(db: Db, userId: string, items: Array<{ skuId: st
 }
 
 export function clearCartStmts(db: Db, userId: string, now: number) {
-  return [db.prepare('DELETE FROM cart_items WHERE user_id = ?').bind(userId), touchCart(db, userId, now)];
+  return [
+    db.prepare('DELETE FROM cart_items WHERE user_id = ?').bind(userId),
+    touchCart(db, userId, now),
+  ];
 }

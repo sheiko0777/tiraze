@@ -38,13 +38,22 @@ export type ShippingQuote =
     }
   | { ok: false; reason: 'zone_uncovered' | 'package_unrated' | 'no_packages'; skuId?: string };
 
-export function quoteShipping(table: ShippingTable, governorate: string, packages: ShippingPackage[]): ShippingQuote {
+export function quoteShipping(
+  table: ShippingTable,
+  governorate: string,
+  packages: ShippingPackage[],
+): ShippingQuote {
   if (packages.length === 0) return { ok: false, reason: 'no_packages' };
   const zoneCode = table.zones[governorate];
   if (!zoneCode) return { ok: false, reason: 'zone_uncovered' };
   const zoneRates = table.rates
     .filter((r) => r.zoneCode === zoneCode)
-    .sort((a, b) => a.maxWeightG - b.maxWeightG || a.maxLongestCm - b.maxLongestCm || a.feePiastres - b.feePiastres);
+    .sort(
+      (a, b) =>
+        a.maxWeightG - b.maxWeightG ||
+        a.maxLongestCm - b.maxLongestCm ||
+        a.feePiastres - b.feePiastres,
+    );
   if (zoneRates.length === 0) return { ok: false, reason: 'zone_uncovered' };
 
   const lines: Array<{ skuId: string; feePiastres: Piastres; rate: ShippingRate }> = [];

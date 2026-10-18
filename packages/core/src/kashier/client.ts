@@ -23,10 +23,16 @@ export interface KashierConfig {
 }
 
 export function kashierApiBase(cfg: Pick<KashierConfig, 'mode' | 'apiBaseUrl'>): string {
-  return cfg.apiBaseUrl ?? (cfg.mode === 'live' ? 'https://api.kashier.io' : 'https://test-api.kashier.io');
+  return (
+    cfg.apiBaseUrl ??
+    (cfg.mode === 'live' ? 'https://api.kashier.io' : 'https://test-api.kashier.io')
+  );
 }
 export function kashierFepBase(cfg: Pick<KashierConfig, 'mode' | 'fepBaseUrl'>): string {
-  return cfg.fepBaseUrl ?? (cfg.mode === 'live' ? 'https://fep.kashier.io' : 'https://test-fep.kashier.io');
+  return (
+    cfg.fepBaseUrl ??
+    (cfg.mode === 'live' ? 'https://fep.kashier.io' : 'https://test-fep.kashier.io')
+  );
 }
 
 export interface CreateSessionInput {
@@ -54,17 +60,19 @@ export class KashierUnknownOutcomeError extends Error {
 /** Thrown when Kashier definitively rejected the request (4xx with a body). */
 export class KashierRejectedError extends Error {
   override name = 'KashierRejectedError';
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
+  readonly status: number;
+  constructor(message: string, status: number) {
     super(message);
+    this.status = status;
   }
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-export function buildCreateSessionBody(cfg: KashierConfig, input: CreateSessionInput): Record<string, unknown> {
+export function buildCreateSessionBody(
+  cfg: KashierConfig,
+  input: CreateSessionInput,
+): Record<string, unknown> {
   return {
     expireAt: input.expireAt.toISOString(),
     maxFailureAttempts: 3,
@@ -105,24 +113,37 @@ export async function createKashierSession(
   try {
     res = await fetchImpl(`${kashierApiBase(cfg)}/v3/payment/sessions`, {
       method: 'POST',
-      headers: { Authorization: cfg.secretKey, 'api-key': cfg.apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: {
+        Authorization: cfg.secretKey,
+        'api-key': cfg.apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
       body: JSON.stringify(buildCreateSessionBody(cfg, input)),
       signal: AbortSignal.timeout(15_000),
     });
   } catch (err) {
-    throw new KashierUnknownOutcomeError(`session request did not complete: ${(err as Error).name}`);
+    throw new KashierUnknownOutcomeError(
+      `session request did not complete: ${(err as Error).name}`,
+    );
   }
-  if (res.status >= 500 || res.status === 429) throw new KashierUnknownOutcomeError(`Kashier responded ${res.status}`);
+  if (res.status >= 500 || [408, 409, 425, 429].includes(res.status))
+    throw new KashierUnknownOutcomeError(`Kashier responded ${res.status}`);
   let body: unknown;
   try {
     body = await res.json();
   } catch {
     throw new KashierUnknownOutcomeError('Kashier response was not JSON');
   }
-  if (!res.ok) throw new KashierRejectedError(`Kashier rejected the session (${res.status})`, res.status);
-  const sessionId = pickString(body, 'sessionId') ?? pickString(body, '_id') ?? pickString(body, 'data', 'sessionId');
+  if (!res.ok)
+    throw new KashierRejectedError(`Kashier rejected the session (${res.status})`, res.status);
+  const sessionId =
+    pickString(body, 'sessionId') ??
+    pickString(body, '_id') ??
+    pickString(body, 'data', 'sessionId');
   const sessionUrl = pickString(body, 'sessionUrl') ?? pickString(body, 'data', 'sessionUrl');
-  if (!sessionId || !sessionUrl) throw new KashierUnknownOutcomeError('Kashier response lacked sessionId/sessionUrl');
+  if (!sessionId || !sessionUrl)
+    throw new KashierUnknownOutcomeError('Kashier response lacked sessionId/sessionUrl');
   const url = new URL(sessionUrl);
   if (url.protocol !== 'https:' || !/(^|\.)kashier\.io$/.test(url.hostname)) {
     throw new KashierUnknownOutcomeError('Kashier sessionUrl is not an https kashier.io URL');
@@ -173,14 +194,29 @@ export async function getKashierSessionPayment(
   sessionId: string,
   fetchImpl: FetchLike = fetch,
 ): Promise<SessionLookup> {
-  const res = await fetchImpl(`${kashierApiBase(cfg)}/v3/payment/sessions/${encodeURIComponent(sessionId)}/payment`, {
-    method: 'GET',
-    headers: { Authorization: cfg.secretKey, 'api-key': cfg.apiKey, Accept: 'application/json' },
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) return { state: 'unknown', raw: { httpStatus: res.status }, amount: null, currency: null, merchantOrderId: null, transactionId: null, kashierOrderId: null };
+  const res = await fetchImpl(
+    `${kashierApiBase(cfg)}/v3/payment/sessions/${encodeURIComponent(sessionId)}/payment`,
+    {
+      method: 'GET',
+      headers: { Authorization: cfg.secretKey, 'api-key': cfg.apiKey, Accept: 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+    },
+  );
+  if (!res.ok)
+    return {
+      state: 'unknown',
+      raw: { httpStatus: res.status },
+      amount: null,
+      currency: null,
+      merchantOrderId: null,
+      transactionId: null,
+      kashierOrderId: null,
+    };
   const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  const data = (body && typeof body.data === 'object' && body.data ? body.data : body) as Record<string, unknown> | null;
+  const data = (body && typeof body.data === 'object' && body.data ? body.data : body) as Record<
+    string,
+    unknown
+  > | null;
   return {
     state: normalizeKashierStatus(pickString(data, 'status')),
     raw: body,
@@ -206,33 +242,52 @@ export interface RefundResult {
 }
 
 /** PUT {fep}/v3/orders/:orderId with apiOperation REFUND. UNVERIFIED against the merchant API. */
-export async function refundKashierOrder(cfg: KashierConfig, input: RefundInput, fetchImpl: FetchLike = fetch): Promise<RefundResult> {
+export async function refundKashierOrder(
+  cfg: KashierConfig,
+  input: RefundInput,
+  fetchImpl: FetchLike = fetch,
+): Promise<RefundResult> {
   let res: Response;
   try {
-    res = await fetchImpl(`${kashierFepBase(cfg)}/v3/orders/${encodeURIComponent(input.kashierOrderId)}`, {
-      method: 'PUT',
-      headers: { Authorization: cfg.secretKey, Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        apiOperation: 'REFUND',
-        reason: input.reason,
-        transaction: {
-          amount: Number(piastresToDecimal(input.amount)),
-          ...(input.targetTransactionId ? { targetTransactionId: input.targetTransactionId } : {}),
+    res = await fetchImpl(
+      `${kashierFepBase(cfg)}/v3/orders/${encodeURIComponent(input.kashierOrderId)}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: cfg.secretKey,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
         },
-      }),
-      signal: AbortSignal.timeout(20_000),
-    });
+        body: JSON.stringify({
+          apiOperation: 'REFUND',
+          reason: input.reason,
+          transaction: {
+            amount: Number(piastresToDecimal(input.amount)),
+            ...(input.targetTransactionId
+              ? { targetTransactionId: input.targetTransactionId }
+              : {}),
+          },
+        }),
+        signal: AbortSignal.timeout(20_000),
+      },
+    );
   } catch (err) {
     throw new KashierUnknownOutcomeError(`refund request did not complete: ${(err as Error).name}`);
   }
-  if (res.status >= 500 || res.status === 429) throw new KashierUnknownOutcomeError(`Kashier responded ${res.status}`);
+  if (res.status >= 500 || [408, 409, 425, 429].includes(res.status))
+    throw new KashierUnknownOutcomeError(`Kashier responded ${res.status}`);
   const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!res.ok) throw new KashierRejectedError(`Kashier rejected the refund (${res.status})`, res.status);
+  if (!res.ok)
+    throw new KashierRejectedError(`Kashier rejected the refund (${res.status})`, res.status);
   const data = (body?.response ?? body?.data ?? body) as Record<string, unknown> | null;
-  const status = pickString(data, 'status') ?? pickString(data, 'transaction', 'status') ?? pickString(body, 'status');
+  const status =
+    pickString(data, 'status') ??
+    pickString(data, 'transaction', 'status') ??
+    pickString(body, 'status');
   return {
     state: normalizeKashierStatus(status),
-    providerReference: pickString(data, 'transactionId') ?? pickString(data, 'transaction', 'transactionId'),
+    providerReference:
+      pickString(data, 'transactionId') ?? pickString(data, 'transaction', 'transactionId'),
     raw: body,
   };
 }

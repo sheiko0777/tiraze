@@ -44,7 +44,10 @@ export function normalizeSearch(text: string): string {
     .trim();
 }
 
-export async function listProducts(db: Db, f: CatalogFilter): Promise<{ items: ProductCard[]; total: number }> {
+export async function listProducts(
+  db: Db,
+  f: CatalogFilter,
+): Promise<{ items: ProductCard[]; total: number }> {
   const where: string[] = [`p.status = 'published'`, `t.locale = ?`];
   const params: unknown[] = [f.locale];
   if (!f.includeFixtures) where.push('p.is_fixture = 0');
@@ -77,9 +80,11 @@ export async function listProducts(db: Db, f: CatalogFilter): Promise<{ items: P
   if (f.availableOnly) skuWhere.push('(i.on_hand - i.reserved) > 0');
   const q = f.q ? normalizeSearch(f.q) : '';
   if (q) {
-    where.push(`t.search_text LIKE ? ESCAPE '\\'`);
-    params.push(`%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+    // D1 caps LIKE patterns at 50 bytes; literal substring search also supports long Arabic queries.
+    where.push('instr(t.search_text, ?) > 0');
+    params.push(q);
   }
+
   const order =
     f.sort === 'price_asc'
       ? 'min_price ASC'
@@ -102,7 +107,8 @@ export async function listProducts(db: Db, f: CatalogFilter): Promise<{ items: P
     ) agg ON agg.product_id = p.id
     WHERE ${where.join(' AND ')}`;
   const allParams = [...skuParams, ...params];
-  const total = (await first<{ n: number }>(db, `SELECT COUNT(*) AS n ${base}`, ...allParams))?.n ?? 0;
+  const total =
+    (await first<{ n: number }>(db, `SELECT COUNT(*) AS n ${base}`, ...allParams))?.n ?? 0;
   const rows = await all<{
     id: string;
     slug: string;
@@ -148,7 +154,15 @@ export interface ProductDetail {
   kind: 'ready' | 'made_to_order';
   isFixture: boolean;
   status: string;
-  t: { slug: string; title: string; description: string; material: string; technique: string; originNote: string; care: string };
+  t: {
+    slug: string;
+    title: string;
+    description: string;
+    material: string;
+    technique: string;
+    originNote: string;
+    care: string;
+  };
   slugs: Record<Locale, string>;
   skus: Array<{
     id: string;
@@ -163,8 +177,19 @@ export interface ProductDetail {
   media: Array<{ url: string; alt: string; width: number | null; height: number | null }>;
 }
 
-export async function getProductBySlug(db: Db, locale: Locale, slug: string, includeFixtures: boolean): Promise<ProductDetail | null> {
-  const p = await first<{ id: string; category: string; kind: 'ready' | 'made_to_order'; is_fixture: number; status: string }>(
+export async function getProductBySlug(
+  db: Db,
+  locale: Locale,
+  slug: string,
+  includeFixtures: boolean,
+): Promise<ProductDetail | null> {
+  const p = await first<{
+    id: string;
+    category: string;
+    kind: 'ready' | 'made_to_order';
+    is_fixture: number;
+    status: string;
+  }>(
     db,
     `SELECT p.id, p.category, p.kind, p.is_fixture, p.status FROM products p JOIN product_translations t ON t.product_id = p.id
      WHERE t.locale = ? AND t.slug = ? AND p.status = 'published' ${includeFixtures ? '' : 'AND p.is_fixture = 0'}`,
@@ -175,31 +200,60 @@ export async function getProductBySlug(db: Db, locale: Locale, slug: string, inc
   return loadProduct(db, p, locale);
 }
 
-export async function getProductById(db: Db, id: string, locale: Locale): Promise<ProductDetail | null> {
-  const p = await first<{ id: string; category: string; kind: 'ready' | 'made_to_order'; is_fixture: number; status: string }>(
-    db,
-    `SELECT id, category, kind, is_fixture, status FROM products WHERE id = ?`,
-    id,
-  );
+export async function getProductById(
+  db: Db,
+  id: string,
+  locale: Locale,
+): Promise<ProductDetail | null> {
+  const p = await first<{
+    id: string;
+    category: string;
+    kind: 'ready' | 'made_to_order';
+    is_fixture: number;
+    status: string;
+  }>(db, `SELECT id, category, kind, is_fixture, status FROM products WHERE id = ?`, id);
   return p ? loadProduct(db, p, locale) : null;
 }
 
 async function loadProduct(
   db: Db,
-  p: { id: string; category: string; kind: 'ready' | 'made_to_order'; is_fixture: number; status: string },
+  p: {
+    id: string;
+    category: string;
+    kind: 'ready' | 'made_to_order';
+    is_fixture: number;
+    status: string;
+  },
   locale: Locale,
 ): Promise<ProductDetail | null> {
   const [translations, skus, media] = await db.batch([
-    db.prepare(`SELECT locale, slug, title, description, material, technique, origin_note, care FROM product_translations WHERE product_id = ?`).bind(p.id),
+    db
+      .prepare(
+        `SELECT locale, slug, title, description, material, technique, origin_note, care FROM product_translations WHERE product_id = ?`,
+      )
+      .bind(p.id),
     db
       .prepare(
         `SELECT s.id, s.code, s.width_cm, s.length_cm, s.color, s.price_piastres, s.is_unique, MAX(i.on_hand - i.reserved, 0) AS available
          FROM skus s JOIN inventory i ON i.sku_id = s.id WHERE s.product_id = ? AND s.active = 1 ORDER BY s.width_cm, s.length_cm`,
       )
       .bind(p.id),
-    db.prepare(`SELECT url, alt_ar, alt_en, width, height FROM media WHERE product_id = ? ORDER BY sort_order`).bind(p.id),
+    db
+      .prepare(
+        `SELECT url, alt_ar, alt_en, width, height FROM media WHERE product_id = ? ORDER BY sort_order`,
+      )
+      .bind(p.id),
   ]);
-  type T = { locale: Locale; slug: string; title: string; description: string; material: string; technique: string; origin_note: string; care: string };
+  type T = {
+    locale: Locale;
+    slug: string;
+    title: string;
+    description: string;
+    material: string;
+    technique: string;
+    origin_note: string;
+    care: string;
+  };
   const ts = (translations?.results ?? []) as T[];
   const tr = ts.find((x) => x.locale === locale);
   if (!tr) return null;
@@ -230,7 +284,15 @@ async function loadProduct(
       isUnique: Number(s.is_unique) === 1,
       available: Number(s.available),
     })),
-    media: ((media?.results ?? []) as Array<{ url: string; alt_ar: string; alt_en: string; width: number | null; height: number | null }>).map((m) => ({
+    media: (
+      (media?.results ?? []) as Array<{
+        url: string;
+        alt_ar: string;
+        alt_en: string;
+        width: number | null;
+        height: number | null;
+      }>
+    ).map((m) => ({
       url: m.url,
       alt: locale === 'ar' ? m.alt_ar : m.alt_en,
       width: m.width,
@@ -256,7 +318,10 @@ export async function listColors(db: Db, includeFixtures: boolean): Promise<stri
   return rows.map((r) => r.color);
 }
 
-export async function listPublishedSlugs(db: Db, includeFixtures: boolean): Promise<Array<{ ar: string; en: string; updatedAt: number }>> {
+export async function listPublishedSlugs(
+  db: Db,
+  includeFixtures: boolean,
+): Promise<Array<{ ar: string; en: string; updatedAt: number }>> {
   const rows = await all<{ ar: string; en: string; updated_at: number }>(
     db,
     `SELECT a.slug AS ar, e.slug AS en, p.updated_at FROM products p

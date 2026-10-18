@@ -9,3 +9,6 @@ export * from './catalogImport.ts';
 export * from './kashier/signature.ts';
 export * from './kashier/client.ts';
 export * from './kashier/webhook.ts';
+
+export * from './catalogQuery.ts';
+export * from './kashier/reconciliation.ts';

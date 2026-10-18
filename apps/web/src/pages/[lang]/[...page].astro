@@ -1,0 +1,745 @@
+---
+import { requestEnv } from '../../lib/environment.ts';
+import { env as bindings } from 'cloudflare:workers';
+import { label } from '../../lib/labels.ts';
+import Shell from '../../layouts/Shell.astro';
+import AdminPanel from '../../components/AdminPanel.astro';
+import { renderEditorial } from '../../lib/editorial.js';
+import { createAuth, type AppEnv } from '../../lib/auth.ts';
+import {
+  listProducts,
+  getProductBySlug,
+  getCart,
+  listAddresses,
+  first,
+  all,
+  previewCheckout,
+} from '@tiraze/db';
+import { formatEGP, GOVERNORATES, catalogQuery } from '@tiraze/core';
+const locale = Astro.params.lang;
+if (locale !== 'ar' && locale !== 'en') return Astro.redirect('/ar', 302);
+const t = (ar: string, en: string) => (locale === 'ar' ? ar : en);
+const page = Astro.params.page ?? '',
+  env = requestEnv(bindings as unknown as AppEnv, Astro.request),
+  db = env.DB;
+const path = '/' + locale,
+  fixtures = env.ENVIRONMENT === 'development' && env.FIXTURES_VISIBLE === 'true';
+const privatePage = ['account', 'cart', 'checkout', 'admin', 'orders'].some(
+  (p) => page === p || page.startsWith(p + '/'),
+);
+const session = privatePage
+  ? await createAuth(env).api.getSession({ headers: Astro.request.headers })
+  : null;
+if (['checkout', 'orders'].some((p) => page === p || page.startsWith(p + '/')) && !session)
+  return Astro.redirect(
+    path + '/account?next=' + encodeURIComponent('/' + locale + '/' + page),
+    302,
+  );
+let invalidFilters = false;
+let catalog = null;
+if (page === 'catalog') {
+  try {
+    catalog = await listProducts(db, {
+      ...catalogQuery(Astro.url.searchParams),
+      locale,
+      includeFixtures: fixtures,
+    });
+  } catch (error) {
+    if ((error as { name?: string }).name !== 'ZodError') throw error;
+    invalidFilters = true;
+    Astro.response.status = 400;
+    catalog = { items: [], total: 0 };
+  }
+}
+const product = page.startsWith('products/')
+  ? await getProductBySlug(db, locale, page.split('/')[1]!, fixtures)
+  : null;
+const cart = page === 'cart' && session ? await getCart(db, session.user.id, locale) : null;
+const addresses = page === 'checkout' && session ? await listAddresses(db, session.user.id) : [];
+const addressId = Astro.url.searchParams.get('addressId') ?? addresses[0]?.id ?? null;
+const checkout =
+  page === 'checkout' && session
+    ? await previewCheckout(
+        db,
+        {
+          userId: session.user.id,
+          email: session.user.email,
+          emailVerified: session.user.emailVerified,
+        },
+        addressId,
+        locale,
+      )
+    : null;
+const orders =
+  page === 'orders' && session
+    ? await all<{
+        id: string;
+        number: string;
+        status: string;
+        payment_status: string;
+        total_piastres: number;
+      }>(
+        db,
+        'SELECT id,number,status,payment_status,total_piastres FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 100',
+        session.user.id,
+      )
+    : [];
+const order =
+  page.startsWith('orders/') && session
+    ? await first<{
+        id: string;
+        number: string;
+        status: string;
+        payment_status: string;
+        total_piastres: number;
+        payment_method: string;
+      }>(
+        db,
+        'SELECT id,number,status,payment_status,total_piastres,payment_method FROM orders WHERE id=? AND user_id=?',
+        page.split('/')[1],
+        session.user.id,
+      )
+    : null;
+const info =
+  ['', 'about', 'care', 'provenance', 'journal', 'concierge', 'gifting', 'buyers'].includes(page) ||
+  /^journal\/[a-z0-9-]+$/.test(page);
+const known =
+  info ||
+  ['catalog', 'cart', 'account', 'checkout', 'orders', 'quote', 'admin'].includes(page) ||
+  !!product ||
+  !!order;
+if (!known) Astro.response.status = 404;
+const title =
+  product?.t.title ??
+  (info ? t('تيراز — حرفة تنسجها الأيدي', 'Tiraze — Silk, woven by hand') : t('تيراز', 'Tiraze'));
+const alternate = product
+  ? '/' +
+    (locale === 'ar' ? 'en' : 'ar') +
+    '/products/' +
+    product.slugs[locale === 'ar' ? 'en' : 'ar']
+  : '/' + (locale === 'ar' ? 'en' : 'ar') + '/' + page;
+---
+
+<Shell
+  locale={locale}
+  title={title}
+  alternate={alternate}
+  description={product?.t.description}
+  structuredData={
+    product && !product.isFixture
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.t.title,
+          description: product.t.description,
+          image: product.media.map((m) => new URL(m.url, 'https://tiraze.net').href),
+          brand: { '@type': 'Brand', name: 'Tiraze' },
+          offers:
+            product.kind === 'ready'
+              ? product.skus.map((s) => ({
+                  '@type': 'Offer',
+                  priceCurrency: 'EGP',
+                  price: (s.pricePiastres / 100).toFixed(2),
+                  sku: s.code,
+                  availability:
+                    s.available > 0
+                      ? 'https://schema.org/InStock'
+                      : 'https://schema.org/OutOfStock',
+                  url: new URL(Astro.url.pathname, 'https://tiraze.net').href,
+                }))
+              : undefined,
+        }
+      : undefined
+  }
+>
+  {info ? (
+    <Fragment set:html={renderEditorial(page || 'home', locale)} />
+  ) : (
+    <section class="commerce" data-locale={locale}>
+      {!known && (
+        <>
+          <h1>404</h1>
+          <p>{t('الصفحة غير موجودة', 'Page not found')}</p>
+          <a href={path}>{t('الرئيسية', 'Home')}</a>
+        </>
+      )}
+      {catalog && (
+        <>
+          <h1>{t('مجموعة تيراز', 'The Tiraze collection')}</h1>
+          {invalidFilters && (
+            <p class="error">{t('يرجى مراجعة قيم البحث', 'Please review the search filters')}</p>
+          )}
+          <form method="get">
+            <label>
+              {t('ابحث عن قطعة', 'Find a piece')}
+              <input
+                type="search"
+                name="q"
+                maxlength="100"
+                value={Astro.url.searchParams.get('q')}
+              />
+            </label>
+            <div class="row">
+              <label>
+                {t('اللون', 'Colour')}
+                <input name="color" maxlength="40" value={Astro.url.searchParams.get('color')} />
+              </label>
+              <label>
+                {t('السعر من — جنيه', 'Minimum price — EGP')}
+                <input
+                  name="minPrice"
+                  inputmode="decimal"
+                  value={Astro.url.searchParams.get('minPrice')}
+                />
+              </label>
+              <label>
+                {t('السعر إلى — جنيه', 'Maximum price — EGP')}
+                <input
+                  name="maxPrice"
+                  inputmode="decimal"
+                  value={Astro.url.searchParams.get('maxPrice')}
+                />
+              </label>
+            </div>
+            <label>
+              {t('الترتيب', 'Sort')}
+              <select name="sort">
+                <option value="curated">{t('اختيارات تيراز', 'Curated')}</option>
+                <option
+                  value="price_asc"
+                  selected={Astro.url.searchParams.get('sort') === 'price_asc'}
+                >
+                  {t('السعر: الأقل أولًا', 'Price: low to high')}
+                </option>
+                <option
+                  value="price_desc"
+                  selected={Astro.url.searchParams.get('sort') === 'price_desc'}
+                >
+                  {t('السعر: الأعلى أولًا', 'Price: high to low')}
+                </option>
+                <option value="newest" selected={Astro.url.searchParams.get('sort') === 'newest'}>
+                  {t('الأحدث', 'Newest')}
+                </option>
+              </select>
+            </label>
+            <label>
+              <input
+                name="available"
+                type="checkbox"
+                value="1"
+                checked={Astro.url.searchParams.get('available') === '1'}
+              />
+              {t('المتاح فقط', 'Available only')}
+            </label>
+            <button>{t('بحث', 'Search')}</button>
+          </form>
+          <p>
+            {catalog.total} {t('قطعة', 'pieces')}
+          </p>
+          <div class="grid">
+            {catalog.items.map((p) => (
+              <article class="card">
+                {p.imageUrl && (
+                  <a href={path + '/products/' + p.slug}>
+                    <img
+                      src={p.imageUrl}
+                      alt={p.imageAlt ?? p.title}
+                      loading="lazy"
+                      width="600"
+                      height="800"
+                    />
+                  </a>
+                )}
+                <h2>
+                  <a href={path + '/products/' + p.slug}>{p.title}</a>
+                </h2>
+                {p.isFixture && (
+                  <p class="fixture">
+                    {t('بيانات تجريبية — ليست للبيع', 'Test fixture — not for sale')}
+                  </p>
+                )}
+                <p>
+                  {p.minPricePiastres == null
+                    ? t('السعر عند الطلب', 'Price on request')
+                    : formatEGP(p.minPricePiastres, locale)}
+                </p>
+              </article>
+            ))}
+          </div>
+          {!catalog.items.length && (
+            <p class="empty">
+              {t(
+                'نجهّز القطع المعتمدة للمجموعة. يمكنك طلب قطعة خاصة الآن.',
+                'The approved collection is being prepared. You can request a bespoke piece now.',
+              )}{' '}
+              <a href={path + '/quote'}>{t('طلب خاص', 'Bespoke enquiry')}</a>
+            </p>
+          )}
+          {catalog.total > 24 && (
+            <a
+              href={(() => {
+                const query = new URLSearchParams(Astro.url.searchParams);
+                query.set('page', String((Number(query.get('page')) || 1) + 1));
+                return '?' + query;
+              })()}
+            >
+              {t('التالي', 'Next')}
+            </a>
+          )}
+        </>
+      )}
+      {product && (
+        <>
+          <div class="grid">
+            <div>
+              {product.media.map((m) => (
+                <img
+                  src={m.url}
+                  alt={m.alt}
+                  width={m.width ?? 800}
+                  height={m.height ?? 1000}
+                  loading="lazy"
+                />
+              ))}
+            </div>
+            <div>
+              <h1>{product.t.title}</h1>
+              {product.isFixture && (
+                <p class="fixture">{t('قطعة اختبار فقط', 'Test fixture only')}</p>
+              )}
+              <p>{product.t.description}</p>
+              <dl>
+                <dt>{t('الخامة', 'Material')}</dt>
+                <dd>{product.t.material}</dd>
+                <dt>{t('التقنية', 'Technique')}</dt>
+                <dd>{product.t.technique}</dd>
+              </dl>
+              <p>{product.t.originNote}</p>
+              {product.kind === 'ready' ? (
+                <form data-store="add-cart">
+                  <label>
+                    {t('اختر المقاس', 'Choose a size')}
+                    <select name="skuId" required>
+                      {product.skus.map((s) => (
+                        <option value={s.id} disabled={s.available < 1}>
+                          {s.widthCm} × {s.lengthCm} {t('سم', 'cm')} · {s.color} ·{' '}
+                          {formatEGP(s.pricePiastres, locale)}{' '}
+                          {s.available < 1 ? t('— غير متاح', '— unavailable') : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    {t('العدد', 'Quantity')}
+                    <input name="qty" type="number" value="1" min="1" max="20" required />
+                  </label>
+                  <button disabled={!product.skus.some((s) => s.available > 0)}>
+                    {t('أضف إلى الحقيبة', 'Add to bag')}
+                  </button>
+                  <p class="error" role="alert"></p>
+                </form>
+              ) : (
+                <a class="action" href={path + '/quote'}>
+                  {t('اطلب هذه القطعة', 'Enquire about this piece')}
+                </a>
+              )}
+              <details>
+                <summary>{t('العناية', 'Care')}</summary>
+                <p>{product.t.care}</p>
+              </details>
+            </div>
+          </div>
+        </>
+      )}
+      {page === 'cart' && (
+        <>
+          <h1>{t('حقيبتك', 'Your bag')}</h1>
+          <div id="guest-cart" hidden={!!session}></div>
+          {cart && (
+            <>
+              <div class="stack">
+                {cart.lines.map((l) => (
+                  <div class="panel">
+                    <h2>{l.title}</h2>
+                    <p>
+                      {l.widthCm} × {l.lengthCm} · {l.qty} ·{' '}
+                      {formatEGP(l.lineTotalPiastres, locale)}
+                    </p>
+                    {l.issue && (
+                      <p class="error">
+                        {t('يرجى مراجعة توفر القطعة', 'Please review availability')}
+                      </p>
+                    )}
+                    <button data-remove={l.skuId} class="secondary">
+                      {t('إزالة', 'Remove')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p>
+                {t('المجموع قبل الشحن', 'Subtotal before shipping')}:{' '}
+                {formatEGP(cart.subtotalPiastres, locale)}
+              </p>
+              {!!cart.lines.length && (
+                <a class="action" href={path + '/checkout'}>
+                  {t('متابعة الطلب', 'Continue to checkout')}
+                </a>
+              )}
+            </>
+          )}
+          {!session && (
+            <a class="action" href={path + '/account?next=' + encodeURIComponent(path + '/cart')}>
+              {t('سجّل الدخول لإتمام الطلب', 'Sign in to continue')}
+            </a>
+          )}
+        </>
+      )}
+      {page === 'account' && Astro.url.searchParams.has('token') && (
+        <form class="panel" data-auth="reset-password">
+          <label>
+            {t('كلمة المرور الجديدة', 'New password')}
+            <input
+              name="newPassword"
+              type="password"
+              minlength="12"
+              maxlength="128"
+              autocomplete="new-password"
+              required
+            />
+          </label>
+          <button>{t('حفظ كلمة المرور', 'Save password')}</button>
+          <p class="error" role="alert"></p>
+        </form>
+      )}
+      {page === 'account' && (
+        <>
+          <h1>{t('حسابك في تيراز', 'Your Tiraze account')}</h1>
+          {session ? (
+            <>
+              <p>
+                {session.user.name} · {session.user.email}
+              </p>
+              <p>
+                {session.user.emailVerified
+                  ? t('البريد مؤكد', 'Email verified')
+                  : t(
+                      'يرجى تأكيد البريد من رسالة التسجيل',
+                      'Please verify your email using the registration message',
+                    )}
+              </p>
+              <div class="row">
+                <a class="action" href={path + '/orders'}>
+                  {t('طلباتي', 'My orders')}
+                </a>
+                <button data-signout class="secondary">
+                  {t('خروج', 'Sign out')}
+                </button>
+              </div>
+              <h2>{t('حماية الحساب', 'Account security')}</h2>
+              <form data-auth="two-factor/enable">
+                <label>
+                  {t('كلمة المرور', 'Password')}
+                  <input name="password" type="password" autocomplete="current-password" required />
+                </label>
+                <button>{t('تفعيل تطبيق المصادقة', 'Set up authenticator')}</button>
+                <pre data-mfa-output></pre>
+                <p class="error" role="alert"></p>
+              </form>
+              <form data-auth="two-factor/verify-totp">
+                <label>
+                  {t('رمز تطبيق المصادقة', 'Authenticator code')}
+                  <input
+                    name="code"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    autocomplete="one-time-code"
+                    required
+                  />
+                </label>
+                <button>{t('تأكيد الرمز', 'Verify code')}</button>
+                <p class="error" role="alert"></p>
+              </form>
+              <a href={path + '/admin'}>{t('إدارة تيراز', 'Tiraze administration')}</a>
+            </>
+          ) : (
+            <>
+              <form data-auth="sign-in/email">
+                <label>
+                  {t('البريد الإلكتروني', 'Email')}
+                  <input name="email" type="email" autocomplete="email" required />
+                </label>
+                <label>
+                  {t('كلمة المرور', 'Password')}
+                  <input
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                    minlength="12"
+                  />
+                </label>
+                <button>{t('دخول', 'Sign in')}</button>
+                <p class="error" role="alert"></p>
+              </form>
+              <h2>{t('حساب جديد', 'Create an account')}</h2>
+              <form data-auth="sign-up/email">
+                <label>
+                  {t('الاسم', 'Name')}
+                  <input name="name" autocomplete="name" required maxlength="120" />
+                </label>
+                <label>
+                  {t('البريد', 'Email')}
+                  <input name="email" type="email" autocomplete="email" required />
+                </label>
+                <label>
+                  {t('كلمة مرور — ١٢ حرفًا على الأقل', 'Password — at least 12 characters')}
+                  <input
+                    name="password"
+                    type="password"
+                    autocomplete="new-password"
+                    required
+                    minlength="12"
+                    maxlength="128"
+                  />
+                </label>
+                <button>{t('إنشاء الحساب', 'Create account')}</button>
+                <p class="error" role="alert"></p>
+              </form>
+              <h2>{t('استعادة كلمة المرور', 'Reset password')}</h2>
+              <form data-auth="request-password-reset">
+                <label>
+                  {t('البريد', 'Email')}
+                  <input name="email" type="email" required />
+                </label>
+                <button>{t('إرسال الرابط', 'Send reset link')}</button>
+                <p class="error" role="alert"></p>
+              </form>
+              <form data-auth="two-factor/verify-totp">
+                <label>
+                  {t('رمز المصادقة عند طلبه', 'Authenticator code if requested')}
+                  <input name="code" pattern="[0-9]{6}" inputmode="numeric" required />
+                </label>
+                <button>{t('تأكيد الدخول', 'Verify sign in')}</button>
+                <p class="error" role="alert"></p>
+              </form>
+            </>
+          )}
+        </>
+      )}
+      {page === 'checkout' && session && (
+        <>
+          <h1>{t('مراجعة وإتمام الطلب', 'Review your order')}</h1>
+          <h2>{t('عنوان الشحن', 'Delivery address')}</h2>
+          <form method="get">
+            <label>
+              {t('العنوان', 'Address')}
+              <select name="addressId">
+                {addresses.map((a) => (
+                  <option value={a.id} selected={a.id === addressId}>
+                    {a.recipientName} — {a.city} — {a.line1}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button class="secondary">{t('تحديث الشحن', 'Update shipping')}</button>
+          </form>
+          <details open={!addresses.length}>
+            <summary>{t('إضافة عنوان', 'Add an address')}</summary>
+            <form data-store="address">
+              <label>
+                {t('المستلم', 'Recipient')}
+                <input name="recipientName" autocomplete="shipping name" required />
+              </label>
+              <label>
+                {t('رقم موبايل مصري', 'Egyptian mobile')}
+                <input name="phone" type="tel" autocomplete="shipping tel" required />
+              </label>
+              <label>
+                {t('كود المحافظة', 'Governorate code')}
+                <select name="governorate" required>
+                  {GOVERNORATES.map((g) => (
+                    <option value={g.code}>{g[locale]}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t('المدينة', 'City')}
+                <input name="city" autocomplete="shipping address-level2" required />
+              </label>
+              <label>
+                {t('العنوان بالتفصيل', 'Street address')}
+                <input name="line1" autocomplete="shipping address-line1" required />
+              </label>
+              <label>
+                {t('تفاصيل إضافية', 'Additional details')}
+                <input name="line2" />
+              </label>
+              <button>{t('حفظ العنوان', 'Save address')}</button>
+              <p class="error" role="alert"></p>
+            </form>
+          </details>
+          {checkout && (
+            <>
+              <p>
+                {t('القطع', 'Items')}: {formatEGP(checkout.cart.subtotalPiastres, locale)}
+              </p>
+              <p>
+                {t('الشحن', 'Shipping')}:{' '}
+                {checkout.shipping?.ok
+                  ? formatEGP(checkout.shipping.feePiastres, locale)
+                  : t(
+                      'غير متاح لهذا العنوان أو المقاس حاليًا',
+                      'Currently unavailable for this address or package',
+                    )}
+              </p>
+              <p>
+                {t('الإجمالي', 'Total')}:{' '}
+                {checkout.totalPiastres == null ? '—' : formatEGP(checkout.totalPiastres, locale)}
+              </p>
+              <form
+                data-store="checkout"
+                data-cart-version={checkout.cart.version}
+                data-address-id={addressId}
+                data-shipping-version={checkout.shipping?.ok ? checkout.shipping.versionId : ''}
+              >
+                <label>
+                  {t('طريقة الدفع', 'Payment method')}
+                  <select name="paymentMethod">
+                    <option value="kashier">
+                      {t('دفع آمن عبر كاشير', 'Secure checkout with Kashier')}
+                    </option>
+                    {checkout.codAllowed && (
+                      <option value="cod">
+                        {t(
+                          'عند الاستلام — يخضع لتأكيد فريقنا',
+                          'Cash on delivery — staff confirmation required',
+                        )}
+                      </option>
+                    )}
+                  </select>
+                </label>
+                <button
+                  disabled={
+                    checkout.totalPiastres == null ||
+                    checkout.cart.hasIssues ||
+                    !session.user.emailVerified
+                  }
+                >
+                  {t('إنشاء الطلب', 'Place order')}
+                </button>
+                <p>
+                  {t(
+                    'تسجيل الحساب وتأكيد البريد مطلوبان. لا يُعتبر الطلب مدفوعًا إلا بعد تأكيد الخادم.',
+                    'A verified account is required. Payment is confirmed by the server.',
+                  )}
+                </p>
+                <p class="error" role="alert"></p>
+              </form>
+            </>
+          )}
+        </>
+      )}
+      {page === 'orders' && (
+        <>
+          <h1>{t('طلباتك', 'Your orders')}</h1>
+          {orders.map((o) => (
+            <div class="panel">
+              <a href={path + '/orders/' + o.id}>{o.number}</a>
+              <p>
+                {label(o.status, locale)} · {label(o.payment_status, locale)} ·{' '}
+                {formatEGP(o.total_piastres, locale)}
+              </p>
+            </div>
+          ))}
+          {!orders.length && <p>{t('لا توجد طلبات بعد', 'No orders yet')}</p>}
+        </>
+      )}
+      {order && (
+        <>
+          <h1>{order.number}</h1>
+          <p>
+            {t('حالة الطلب', 'Order status')}: {label(order.status, locale)}
+          </p>
+          <p>
+            {t('حالة الدفع', 'Payment status')}: {label(order.payment_status, locale)}
+          </p>
+          <p>{formatEGP(order.total_piastres, locale)}</p>
+          {order.status === 'awaiting_payment' && (
+            <button data-pay-order={order.id}>{t('متابعة الدفع', 'Continue payment')}</button>
+          )}
+          <p>
+            {t(
+              'صفحة العودة من الدفع لا تؤكد الدفع. تُحدّث الحالة بعد تحقق الخادم.',
+              'The payment return page does not confirm payment. Status updates after server verification.',
+            )}
+          </p>
+        </>
+      )}
+      {page === 'quote' && (
+        <>
+          <h1>{t('قطعة تُنسج لك', 'A piece, woven for you')}</h1>
+          <p>
+            {t(
+              'أخبرنا بالمقاس والتفاصيل. هذا طلب تسعير، ولا يتضمن دفعًا أو حجزًا.',
+              'Tell us about your space. This is a quotation request, without payment or a stock reservation.',
+            )}
+          </p>
+          <form data-store="quote">
+            <label>
+              {t('الاسم', 'Name')}
+              <input name="name" autocomplete="name" required maxlength="120" />
+            </label>
+            <label>
+              {t('البريد', 'Email')}
+              <input name="email" type="email" required maxlength="160" />
+            </label>
+            <label>
+              {t('الموبايل — اختياري', 'Mobile — optional')}
+              <input name="phone" type="tel" />
+            </label>
+            <div class="row">
+              <label>
+                {t('العرض بالسم', 'Width in cm')}
+                <input name="widthCm" type="number" required min="30" max="2000" />
+              </label>
+              <label>
+                {t('الطول بالسم', 'Length in cm')}
+                <input name="lengthCm" type="number" required min="30" max="3000" />
+              </label>
+            </div>
+            <label>
+              {t('الألوان', 'Colours')}
+              <input name="colors" maxlength="200" />
+            </label>
+            <label>
+              {t('الميزانية بالجنيه — اختياري', 'Budget in EGP — optional')}
+              <input name="budgetEgp" type="number" min="0" />
+            </label>
+            <label>
+              {t('التفاصيل', 'Details')}
+              <textarea name="notes" maxlength="2000"></textarea>
+            </label>
+            <label>
+              {t('طريقة التواصل', 'Contact method')}
+              <select name="contactMethod">
+                <option value="email">Email</option>
+                <option value="phone">{t('مكالمة', 'Phone')}</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </label>
+            <label>
+              <input name="consent" type="checkbox" required />
+              {t(
+                'أوافق على استخدام التفاصيل للتواصل بخصوص طلبي',
+                'I agree to use these details to respond to my enquiry',
+              )}
+            </label>
+            <button>{t('إرسال الطلب', 'Send enquiry')}</button>
+            <p class="error" role="alert"></p>
+          </form>
+        </>
+      )}
+      {page === 'admin' && <AdminPanel locale={locale} />}
+    </section>
+  )}
+</Shell>

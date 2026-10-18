@@ -52,7 +52,9 @@ const MOBILE = /^(?:\+?20|0)?(1[0125]\d{8})$/;
 
 /** Normalises an Egyptian mobile number to E.164 (+201XXXXXXXXX) or returns null. */
 export function normalizeEgyptMobile(input: string): string | null {
-  const digits = input.replace(/[\s\-()]/g, '').replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+  const digits = input
+    .replace(/[\s\-()]/g, '')
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   const m = MOBILE.exec(digits);
   return m ? `+20${m[1]}` : null;
 }

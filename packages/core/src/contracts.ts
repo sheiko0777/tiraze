@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { isGovernorateCode, normalizeEgyptMobile } from './egypt.ts';
-import { ORDER_STATUSES, PAYMENT_STATUSES, FULFILLMENT_STATUSES, QUOTE_STATUSES } from './states.ts';
+import {
+  ORDER_STATUSES,
+  PAYMENT_STATUSES,
+  FULFILLMENT_STATUSES,
+  QUOTE_STATUSES,
+} from './states.ts';
 
 // Server-side input contracts. Every API boundary parses with one of these; prices, totals,
 // payment status and stock are never accepted from the client.
@@ -8,7 +13,11 @@ import { ORDER_STATUSES, PAYMENT_STATUSES, FULFILLMENT_STATUSES, QUOTE_STATUSES 
 export const STAFF_ROLES = ['owner', 'catalog', 'fulfillment', 'support', 'finance'] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
-const id = z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/);
+const id = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z0-9_-]+$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
 const optionalText = (max: number) =>
   z
@@ -18,7 +27,11 @@ const optionalText = (max: number) =>
     .optional()
     .transform((v) => (v ? v : undefined));
 
-export const idempotencyKey = z.string().min(16).max(100).regex(/^[A-Za-z0-9_-]+$/);
+export const idempotencyKey = z
+  .string()
+  .min(16)
+  .max(100)
+  .regex(/^[A-Za-z0-9_-]+$/);
 
 export const egyptMobile = z
   .string()
@@ -54,6 +67,7 @@ export type AddressInput = z.infer<typeof addressInput>;
 
 export const checkoutInput = z.object({
   addressId: id,
+  shippingVersionId: id,
   paymentMethod: z.enum(['kashier', 'cod']),
   idempotencyKey,
   /** Cart version the customer reviewed; a mismatch means the cart changed and must be re-reviewed. */
@@ -62,20 +76,25 @@ export const checkoutInput = z.object({
 });
 export type CheckoutInput = z.infer<typeof checkoutInput>;
 
-export const quoteRequestInput = z.object({
-  name: text(120),
-  email: z.email().max(160),
-  phone: egyptMobile.optional(),
-  widthCm: z.number().int().min(30).max(2000),
-  lengthCm: z.number().int().min(30).max(3000),
-  colors: optionalText(200),
-  material: optionalText(120),
-  budgetEgp: z.number().int().min(0).max(100_000_000).optional(),
-  contactMethod: z.enum(['email', 'phone', 'whatsapp']),
-  notes: optionalText(2000),
-  locale: z.enum(['ar', 'en']).default('ar'),
-  consent: z.literal(true),
-});
+export const quoteRequestInput = z
+  .object({
+    name: text(120),
+    email: z.email().max(160),
+    phone: egyptMobile.optional(),
+    widthCm: z.number().int().min(30).max(2000),
+    lengthCm: z.number().int().min(30).max(3000),
+    colors: optionalText(200),
+    material: optionalText(120),
+    budgetEgp: z.number().int().min(0).max(100_000_000).optional(),
+    contactMethod: z.enum(['email', 'phone', 'whatsapp']),
+    notes: optionalText(2000),
+    locale: z.enum(['ar', 'en']).default('ar'),
+    consent: z.literal(true),
+  })
+  .refine((v) => v.contactMethod === 'email' || !!v.phone, {
+    message: 'phone_required_for_contact_method',
+    path: ['phone'],
+  });
 
 export const inventoryAdjustInput = z.object({
   skuId: id,
@@ -95,6 +114,7 @@ export const shipmentInput = z.object({
 });
 
 export const refundInput = z.object({
+  paymentAttemptId: id.optional(),
   amountPiastres: z.number().int().positive(),
   reason: text(300),
   idempotencyKey,
@@ -111,13 +131,21 @@ export const codCollectionInput = z.object({
 });
 
 export const shippingRateInput = z.object({
-  zoneCode: z.string().trim().min(1).max(32).regex(/^[A-Z0-9_-]+$/),
+  zoneCode: z
+    .string()
+    .trim()
+    .min(1)
+    .max(32)
+    .regex(/^[A-Z0-9_-]+$/),
   maxWeightG: z.number().int().positive().max(500_000),
   maxLongestCm: z.number().int().positive().max(2000),
   feePiastres: z.number().int().min(0).max(10_000_000),
 });
 export const shippingTableInput = z.object({
-  zones: z.record(z.string().refine(isGovernorateCode, 'invalid_governorate'), z.string().regex(/^[A-Z0-9_-]+$/)),
+  zones: z.record(
+    z.string().refine(isGovernorateCode, 'invalid_governorate'),
+    z.string().regex(/^[A-Z0-9_-]+$/),
+  ),
   rates: z.array(shippingRateInput).min(1).max(500),
   codCarrierLimitPiastres: z.number().int().positive().max(1_000_000).nullable().optional(),
 });
@@ -135,7 +163,10 @@ export const orderListFilter = z.object({
   q: z.string().trim().max(60).optional(),
 });
 
-export const quoteStatusInput = z.object({ status: z.enum(QUOTE_STATUSES), note: optionalText(500) });
+export const quoteStatusInput = z.object({
+  status: z.enum(QUOTE_STATUSES),
+  note: optionalText(500),
+});
 
 export function firstIssueCode(error: z.ZodError): string {
   const issue = error.issues[0];

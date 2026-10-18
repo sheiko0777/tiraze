@@ -1,0 +1,9 @@
+node_modules
+dist
+.wrangler
+.astro
+apps/web/public
+apps/web/src/lib/editorial.js
+apps/web/src/lib/editorial-data.js
+
+build

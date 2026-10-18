@@ -5,6 +5,11 @@ export type Stmt = D1PreparedStatement;
 
 /** Error codes raised by schema triggers via RAISE(ABORT, 'TIRAZE_…'). */
 export type DbGuardCode =
+  | 'TIRAZE_CHECKOUT_DISABLED'
+  | 'TIRAZE_ADDRESS_CHANGED'
+  | 'TIRAZE_CART_CHANGED'
+  | 'TIRAZE_SHIPPING_CHANGED'
+  | 'TIRAZE_OPERATION_CONFLICT'
   | 'TIRAZE_INSUFFICIENT_STOCK'
   | 'TIRAZE_PRICE_CHANGED'
   | 'TIRAZE_RESERVATION_MISSING'
@@ -27,11 +32,17 @@ export function isCheckViolation(err: unknown): boolean {
 }
 
 export async function first<T>(db: Db, sql: string, ...params: unknown[]): Promise<T | null> {
-  return db.prepare(sql).bind(...params).first<T>();
+  return db
+    .prepare(sql)
+    .bind(...params)
+    .first<T>();
 }
 
 export async function all<T>(db: Db, sql: string, ...params: unknown[]): Promise<T[]> {
-  const r = await db.prepare(sql).bind(...params).all<T>();
+  const r = await db
+    .prepare(sql)
+    .bind(...params)
+    .all<T>();
   return r.results ?? [];
 }
 

@@ -17,7 +17,10 @@ import { hmacSha256Hex, timingSafeEqual } from '../crypto.ts';
 export const KASHIER_SIGNATURE_HEADER = 'x-kashier-signature';
 
 function strictEncode(value: string): string {
-  return encodeURIComponent(value).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
 }
 
 function encodePair(key: string, value: unknown): string[] {
@@ -43,7 +46,10 @@ export function kashierSignaturePayload(data: Record<string, unknown>): string {
   return parts.join('&');
 }
 
-export async function computeKashierSignature(data: Record<string, unknown>, paymentApiKey: string): Promise<string> {
+export async function computeKashierSignature(
+  data: Record<string, unknown>,
+  paymentApiKey: string,
+): Promise<string> {
   return hmacSha256Hex(paymentApiKey, kashierSignaturePayload(data));
 }
 

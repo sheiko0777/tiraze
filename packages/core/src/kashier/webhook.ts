@@ -5,7 +5,16 @@ import { normalizeKashierStatus, type KashierMode, type ProviderPaymentState } f
 // a payment is successful only for event "pay" (or "capture") with data.status SUCCESS, the
 // configured mode, EGP, and an amount equal to our authoritative payment attempt.
 
-export const KASHIER_EVENTS = ['pay', 'authorize', 'capture', 'refund', 'partial_refund', 'void', 'reject', 'reversal'] as const;
+export const KASHIER_EVENTS = [
+  'pay',
+  'authorize',
+  'capture',
+  'refund',
+  'partial_refund',
+  'void',
+  'reject',
+  'reversal',
+] as const;
 export type KashierEvent = (typeof KASHIER_EVENTS)[number];
 
 export interface ParsedKashierWebhook {
@@ -38,7 +47,8 @@ export function parseKashierWebhook(body: unknown): ParsedKashierWebhook {
   if (typeof event !== 'string' || !(KASHIER_EVENTS as readonly string[]).includes(event)) {
     throw new WebhookShapeError('unknown event');
   }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new WebhookShapeError('data is not an object');
+  if (!data || typeof data !== 'object' || Array.isArray(data))
+    throw new WebhookShapeError('data is not an object');
   const d = data as Record<string, unknown>;
   const merchantOrderId = str(d.merchantOrderId);
   if (!merchantOrderId) throw new WebhookShapeError('merchantOrderId missing');
@@ -63,23 +73,40 @@ export function parseKashierWebhook(body: unknown): ParsedKashierWebhook {
     currency: str(d.currency),
     amount,
     merchantId: str(d.merchantId),
-    dedupeKey: ['kashier', event, merchantOrderId, transactionId ?? kashierOrderId ?? '-', rawStatus.toUpperCase()].join(':'),
+    dedupeKey: [
+      'kashier',
+      event,
+      merchantOrderId,
+      transactionId ?? kashierOrderId ?? '-',
+      rawStatus.toUpperCase(),
+    ].join(':'),
   };
 }
 
 export type WebhookMatch =
   | { ok: true }
-  | { ok: false; reason: 'mode_mismatch' | 'currency_mismatch' | 'amount_mismatch' | 'amount_missing' | 'merchant_mismatch' };
+  | {
+      ok: false;
+      reason:
+        | 'mode_mismatch'
+        | 'currency_mismatch'
+        | 'amount_mismatch'
+        | 'amount_missing'
+        | 'merchant_mismatch';
+    };
 
 /** Authoritative matching against our stored attempt; any mismatch is never treated as paid. */
 export function matchWebhookToAttempt(
   hook: ParsedKashierWebhook,
   expected: { mode: KashierMode; amount: Piastres; currency: 'EGP'; merchantId: string },
 ): WebhookMatch {
-  if (hook.mode !== expected.mode) return { ok: false, reason: 'mode_mismatch' };
-  if ((hook.currency ?? '').toUpperCase() !== expected.currency) return { ok: false, reason: 'currency_mismatch' };
+  if (hook.mode != null && hook.mode !== expected.mode)
+    return { ok: false, reason: 'mode_mismatch' };
+  if ((hook.currency ?? '').toUpperCase() !== expected.currency)
+    return { ok: false, reason: 'currency_mismatch' };
   // The webhook payload documentation does not list merchantId; when present it must match.
-  if (hook.merchantId && hook.merchantId !== expected.merchantId) return { ok: false, reason: 'merchant_mismatch' };
+  if (hook.merchantId && hook.merchantId !== expected.merchantId)
+    return { ok: false, reason: 'merchant_mismatch' };
   if (hook.event === 'pay' || hook.event === 'capture') {
     if (hook.amount == null) return { ok: false, reason: 'amount_missing' };
     if (hook.amount !== expected.amount) return { ok: false, reason: 'amount_mismatch' };

@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: CommerceSettings = {
   reservationMinutesOnline: 15,
   codReviewHours: 24,
   requireVerifiedEmail: true,
-  checkoutEnabled: true,
+  checkoutEnabled: false,
   allowedTrackingHosts: [],
 };
 
@@ -25,17 +25,31 @@ export async function getSettings(db: Db): Promise<CommerceSettings> {
   };
   const hosts = parseJson<unknown>(map.get('allowed_tracking_hosts'), []);
   return {
-    reservationMinutesOnline: num('reservation_minutes_online', DEFAULT_SETTINGS.reservationMinutesOnline, 5, 120),
+    reservationMinutesOnline: num(
+      'reservation_minutes_online',
+      DEFAULT_SETTINGS.reservationMinutesOnline,
+      5,
+      120,
+    ),
     codReviewHours: num('cod_review_hours', DEFAULT_SETTINGS.codReviewHours, 1, 168),
     requireVerifiedEmail: map.get('require_verified_email') !== 'false',
-    checkoutEnabled: map.get('checkout_enabled') !== 'false',
-    allowedTrackingHosts: Array.isArray(hosts) ? hosts.filter((h): h is string => typeof h === 'string' && /^[a-z0-9.-]+$/.test(h)) : [],
+    checkoutEnabled: map.get('checkout_enabled') === 'true',
+    allowedTrackingHosts: Array.isArray(hosts)
+      ? hosts.filter((h): h is string => typeof h === 'string' && /^[a-z0-9.-]+$/.test(h))
+      : [],
   };
 }
 
-export async function setSetting(db: Db, key: keyof typeof SETTING_KEYS, value: string, now: number): Promise<void> {
+export async function setSetting(
+  db: Db,
+  key: keyof typeof SETTING_KEYS,
+  value: string,
+  now: number,
+): Promise<void> {
   await db
-    .prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+    .prepare(
+      'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at',
+    )
     .bind(SETTING_KEYS[key], value, now)
     .run();
 }

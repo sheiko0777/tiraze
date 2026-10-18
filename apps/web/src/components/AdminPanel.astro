@@ -1,0 +1,348 @@
+---
+const { locale } = Astro.props;
+const t = (ar: string, en: string) => (locale === 'ar' ? ar : en);
+---
+
+<h1>{t('إدارة تيراز', 'Tiraze administration')}</h1>
+<p>
+  {t(
+    'حساب موظف مؤكد ومصادقة ثنائية مطلوبان. أدخل رمزًا حديثًا لفتح الإدارة لمدة ١٥ دقيقة.',
+    'A verified staff account and two-factor authentication are required. Enter a current code for a 15-minute administration session.',
+  )}
+</p>
+<form data-store="step-up">
+  <label>
+    {t('رمز المصادقة', 'Authenticator code')}
+    <input
+      name="code"
+      pattern="[0-9]{6}"
+      inputmode="numeric"
+      autocomplete="one-time-code"
+      required
+    />
+  </label>
+  <button>{t('فتح الإدارة', 'Unlock administration')}</button>
+  <p class="error" role="alert"></p>
+</form>
+<div class="row">
+  {[
+    'orders',
+    'catalog',
+    'inventory',
+    'quotes',
+    'refunds',
+    'payments',
+    'outbox',
+    'imports',
+    'audit',
+  ].map((area) => (
+    <button class="secondary" data-admin-area={area}>
+      {area}
+    </button>
+  ))}
+</div>
+<div id="admin-data" class="table-wrap"></div>
+<details>
+  <summary>{t('استيراد كتالوج CSV', 'Import CSV catalogue')}</summary>
+  <p>
+    {t(
+      'تحقق من الملف أولًا، ثم اعتمد الاستيراد. تظل القطع مسودات حتى يكتمل الملف كله.',
+      'Validate the file, then approve import. Pieces stay in draft until the entire file is staged.',
+    )}
+  </p>
+  <form data-store="import-validate">
+    <label>
+      CSV
+      <input type="file" name="file" accept=".csv,text/csv" required />
+    </label>
+    <button>{t('فحص الملف', 'Validate file')}</button>
+    <pre data-import-report></pre>
+    <p class="error" role="alert"></p>
+  </form>
+  <form data-store="import-commit">
+    <label>
+      {t('مرجع الاستيراد المعتمد', 'Validated import ID')}
+      <input name="id" required />
+    </label>
+    <button>{t('اعتماد واستكمال الاستيراد', 'Approve and resume import')}</button>
+    <p data-import-progress role="status"></p>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('تعديل المخزون', 'Adjust inventory')}</summary>
+  <form data-store="inventory">
+    <label>
+      SKU ID
+      <input name="skuId" required />
+    </label>
+    <label>
+      {t('التغيير (+ أو -)', 'Delta (+ or -)')}
+      <input name="delta" type="number" required min="-1000" max="1000" />
+    </label>
+    <label>
+      {t('السبب', 'Reason')}
+      <input name="reason" required maxlength="300" />
+    </label>
+    <button>{t('حفظ', 'Save')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('تأكيد الدفع عند الاستلام', 'Review COD order')}</summary>
+  <form data-store="admin-cod">
+    <label>
+      Order ID
+      <input name="orderId" required />
+    </label>
+    <label>
+      {t('القرار', 'Decision')}
+      <select name="decision">
+        <option value="confirm">{t('تأكيد بعد التواصل', 'Confirm after contact')}</option>
+        <option value="reject">{t('رفض', 'Reject')}</option>
+      </select>
+    </label>
+    <label>
+      {t('السبب', 'Reason')}
+      <input name="reason" required maxlength="300" />
+    </label>
+    <button>{t('تسجيل القرار', 'Record decision')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('الشحن والتسليم', 'Fulfillment')}</summary>
+  <form data-store="admin-fulfillment">
+    <label>
+      Order ID
+      <input name="orderId" required />
+    </label>
+    <label>
+      {t('الخطوة', 'Action')}
+      <select name="action">
+        <option value="prepare">{t('بدء التجهيز', 'Start preparation')}</option>
+        <option value="ship">{t('تسجيل الشحنة', 'Record shipment')}</option>
+        <option value="deliver">{t('تأكيد التسليم', 'Record delivery')}</option>
+        <option value="return">
+          {t('استلام مرتجع بعد التسليم', 'Record return after delivery')}
+        </option>
+      </select>
+    </label>
+    <label>
+      {t('شركة الشحن — عند تسجيل شحنة', 'Carrier — required for shipment')}
+      <input name="carrier" maxlength="80" />
+    </label>
+    <label>
+      {t('رقم التتبع', 'Tracking number')}
+      <input name="trackingNumber" maxlength="80" />
+    </label>
+    <label>
+      {t('رابط تتبع من نطاق معتمد — اختياري', 'Approved tracking URL — optional')}
+      <input name="trackingUrl" type="url" />
+    </label>
+    <button>{t('تحديث', 'Update')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('تحصيل وتسوية الدفع عند الاستلام', 'COD collection and settlement')}</summary>
+  <form data-store="admin-collection">
+    <label>
+      Order ID
+      <input name="orderId" required />
+    </label>
+    <label>
+      {t('العملية', 'Operation')}
+      <select name="action">
+        <option value="collect">
+          {t('تسجيل تحصيل العميل', 'Record collection from customer')}
+        </option>
+        <option value="settle">{t('تسجيل التسوية مع الناقل', 'Record carrier settlement')}</option>
+      </select>
+    </label>
+    <label>
+      {t('المبلغ بالجنيه — للتحصيل', 'Amount in EGP — collection')}
+      <input name="amountEgp" inputmode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" />
+    </label>
+    <label>
+      {t('مرجع الإثبات', 'Evidence reference')}
+      <input name="reference" required maxlength="120" />
+    </label>
+    <button>{t('تسجيل', 'Record')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('طلب استرداد إلى كاشير', 'Request Kashier refund')}</summary>
+  <form data-store="admin-refund">
+    <label>
+      Order ID
+      <input name="orderId" required />
+    </label>
+    <label>
+      {t(
+        'Payment attempt ID — اختياري لتحديد دفعة بعينها',
+        'Payment attempt ID — optional to select a specific charge',
+      )}
+      <input name="paymentAttemptId" maxlength="64" />
+    </label>
+    <label>
+      {t('المبلغ بالجنيه', 'Amount in EGP')}
+      <input name="amountEgp" inputmode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required />
+    </label>
+    <label>
+      {t('السبب', 'Reason')}
+      <input name="reason" required maxlength="300" />
+    </label>
+    <button>{t('طلب الاسترداد', 'Request refund')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('تحديث استفسار', 'Update enquiry')}</summary>
+  <form data-store="admin-quote">
+    <label>
+      Quote ID
+      <input name="id" required />
+    </label>
+    <label>
+      {t('الحالة', 'Status')}
+      <select name="status">
+        {['new', 'contacted', 'quoted', 'closed'].map((s) => (
+          <option value={s}>{s}</option>
+        ))}
+      </select>
+    </label>
+    <label>
+      {t('ملاحظة', 'Note')}
+      <input name="note" maxlength="500" />
+    </label>
+    <button>{t('حفظ', 'Save')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('حالة قطعة وسعر SKU', 'Product status and SKU price')}</summary>
+  <form data-store="admin-catalog">
+    <label>
+      Product ID
+      <input name="id" required />
+    </label>
+    <label>
+      {t('العملية', 'Operation')}
+      <select name="action">
+        <option value="status">{t('تغيير حالة النشر', 'Change publication status')}</option>
+        <option value="price">{t('تعديل سعر SKU', 'Change SKU price')}</option>
+      </select>
+    </label>
+    <label>
+      {t('الحالة', 'Status')}
+      <select name="status">
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+        <option value="archived">Archived</option>
+      </select>
+    </label>
+    <label>
+      SKU ID
+      <input name="skuId" />
+    </label>
+    <label>
+      {t('السعر بالجنيه', 'Price in EGP')}
+      <input name="amountEgp" inputmode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" />
+    </label>
+    <button>{t('حفظ', 'Save')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('مصفوفة الشحن — للمالك', 'Shipping matrix — owner')}</summary>
+  <form data-store="admin-shipping">
+    <label>
+      {t(
+        'مصفوفة المناطق والطرود بصيغة JSON المعتمدة في دليل التشغيل',
+        'Zone and package matrix JSON, as documented in the runbook',
+      )}
+      <textarea name="matrix" required rows="8" maxlength="16000"></textarea>
+    </label>
+    <button>{t('اعتماد إصدار جديد', 'Activate new version')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('صلاحيات الموظفين — للمالك', 'Staff permissions — owner')}</summary>
+  <form data-store="admin-roles">
+    <label>
+      {t('بريد حساب موظف مؤكد ومفعّل للمصادقة الثنائية', 'Verified staff account with MFA')}
+      <input name="email" type="email" required />
+    </label>
+    <label>
+      {t('الصلاحية', 'Role')}
+      <select name="role">
+        {['owner', 'catalog', 'fulfillment', 'support', 'finance'].map((r) => (
+          <option value={r}>{r}</option>
+        ))}
+      </select>
+    </label>
+    <label>
+      {t('الإجراء', 'Action')}
+      <select name="grant">
+        <option value="true">{t('منح', 'Grant')}</option>
+        <option value="false">{t('سحب', 'Revoke')}</option>
+      </select>
+    </label>
+    <button>{t('حفظ', 'Save')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+
+<details>
+  <summary>{t('تسوية استرداد معلّق', 'Reconcile an unresolved refund')}</summary>
+  <form data-store="admin-refund-reconcile">
+    <label>
+      Refund ID
+      <input name="id" required />
+    </label>
+    <label>
+      {t('مرجع معاملة الاسترداد في كاشير', 'Kashier refund transaction reference')}
+      <input name="providerTransactionId" required maxlength="120" />
+    </label>
+    <button>{t('التحقق من كاشير وتسوية الحالة', 'Verify with Kashier and reconcile')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+
+<details>
+  <summary>{t('إلغاء طلب قبل الشحن', 'Cancel an unshipped order')}</summary>
+  <form data-store="admin-cancel">
+    <label>
+      Order ID
+      <input name="id" required />
+    </label>
+    <label>
+      {t(
+        'السبب — الإلغاء لا ينشئ استردادًا تلقائيًا',
+        'Reason — cancellation does not issue an automatic refund',
+      )}
+      <input name="reason" required minlength="3" maxlength="300" />
+    </label>
+    <button>{t('إلغاء الطلب', 'Cancel order')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>
+<details>
+  <summary>{t('استقبال الطلبات — للمالك', 'Order intake — owner')}</summary>
+  <form data-store="admin-gate">
+    <label>
+      {t('الحالة', 'State')}
+      <select name="checkoutEnabled">
+        <option value="false">{t('إيقاف طلبات جديدة', 'Stop new orders')}</option>
+        <option value="true">
+          {t('فتح الطلبات بعد اكتمال الجاهزية', 'Open orders after readiness approval')}
+        </option>
+      </select>
+    </label>
+    <button>{t('حفظ', 'Save')}</button>
+    <p class="error" role="alert"></p>
+  </form>
+</details>

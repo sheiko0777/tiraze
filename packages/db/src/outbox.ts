@@ -19,12 +19,19 @@ export interface OutboxMessage {
   topic: OutboxTopic;
   payload: Record<string, unknown>;
   attempts: number;
+  createdAt: number;
   lockToken: string;
 }
 
 export const OUTBOX_MAX_ATTEMPTS = 8;
 
-export function enqueueStmt(db: Db, topic: OutboxTopic, dedupeKey: string, payload: Record<string, unknown>, now: number): Stmt {
+export function enqueueStmt(
+  db: Db,
+  topic: OutboxTopic,
+  dedupeKey: string,
+  payload: Record<string, unknown>,
+  now: number,
+): Stmt {
   return db
     .prepare(
       `INSERT INTO outbox (id, topic, payload, dedupe_key, status, attempts, next_attempt_at, created_at)
@@ -34,28 +41,55 @@ export function enqueueStmt(db: Db, topic: OutboxTopic, dedupeKey: string, paylo
 }
 
 /** Leases up to `limit` due messages. Expired leases (crashed workers) become claimable again. */
-export async function claimOutbox(db: Db, now: number, limit = 20, leaseMs = 60_000): Promise<OutboxMessage[]> {
+export async function claimOutbox(
+  db: Db,
+  now: number,
+  limit = 20,
+  leaseMs = 60_000,
+): Promise<OutboxMessage[]> {
+  await db
+    .prepare(
+      `UPDATE outbox SET status = 'dead', last_error = 'lease_retry_limit', locked_until = NULL
+    WHERE status = 'processing' AND locked_until <= ? AND attempts >= ?`,
+    )
+    .bind(now, OUTBOX_MAX_ATTEMPTS)
+    .run();
   const token = randomId();
-  const rows = await returning<{ id: string; topic: OutboxTopic; payload: string; attempts: number }>(
+  const rows = await returning<{
+    id: string;
+    topic: OutboxTopic;
+    payload: string;
+    attempts: number;
+    created_at: number;
+  }>(
     db
       .prepare(
         `UPDATE outbox SET status = 'processing', locked_until = ?, lock_token = ?, attempts = attempts + 1
          WHERE id IN (
            SELECT id FROM outbox
-           WHERE (status = 'pending' AND next_attempt_at <= ?) OR (status = 'processing' AND locked_until < ?)
+           WHERE attempts < 8 AND ((status = 'pending' AND next_attempt_at <= ?) OR (status = 'processing' AND locked_until <= ?))
            ORDER BY next_attempt_at LIMIT ?
          )
-         RETURNING id, topic, payload, attempts`,
+         RETURNING id, topic, payload, attempts, created_at`,
       )
       .bind(now + leaseMs, token, now, now, limit),
   );
-  return rows.map((r) => ({ id: r.id, topic: r.topic, payload: parseJson(r.payload, {}), attempts: r.attempts, lockToken: token }));
+  return rows.map((r) => ({
+    id: r.id,
+    topic: r.topic,
+    payload: parseJson(r.payload, {}),
+    attempts: r.attempts,
+    createdAt: r.created_at,
+    lockToken: token,
+  }));
 }
 
 export async function markOutboxSent(db: Db, msg: OutboxMessage, now: number): Promise<boolean> {
   const r = await returning(
     db
-      .prepare(`UPDATE outbox SET status = 'sent', sent_at = ?, locked_until = NULL, last_error = NULL WHERE id = ? AND lock_token = ? AND status = 'processing' RETURNING id`)
+      .prepare(
+        `UPDATE outbox SET status = 'sent', sent_at = ?, locked_until = NULL, last_error = NULL WHERE id = ? AND lock_token = ? AND status = 'processing' RETURNING id`,
+      )
       .bind(now, msg.id, msg.lockToken),
   );
   return r.length === 1;
@@ -65,19 +99,32 @@ export function backoffMs(attempts: number): number {
   return Math.min(60_000 * 2 ** Math.max(0, attempts - 1), 6 * 60 * 60_000);
 }
 
-export async function markOutboxFailed(db: Db, msg: OutboxMessage, error: string, now: number): Promise<'retry' | 'dead'> {
+export async function markOutboxFailed(
+  db: Db,
+  msg: OutboxMessage,
+  error: string,
+  now: number,
+): Promise<'retry' | 'dead'> {
   const dead = msg.attempts >= OUTBOX_MAX_ATTEMPTS;
   await db
     .prepare(
       `UPDATE outbox SET status = ?, next_attempt_at = ?, locked_until = NULL, last_error = ?
        WHERE id = ? AND lock_token = ? AND status = 'processing'`,
     )
-    .bind(dead ? 'dead' : 'pending', now + backoffMs(msg.attempts), error.slice(0, 500), msg.id, msg.lockToken)
+    .bind(
+      dead ? 'dead' : 'pending',
+      now + backoffMs(msg.attempts),
+      error.slice(0, 500),
+      msg.id,
+      msg.lockToken,
+    )
     .run();
   return dead ? 'dead' : 'retry';
 }
 
 export async function outboxCounts(db: Db): Promise<Record<string, number>> {
-  const r = await db.prepare(`SELECT status, COUNT(*) AS n FROM outbox GROUP BY status`).all<{ status: string; n: number }>();
+  const r = await db
+    .prepare(`SELECT status, COUNT(*) AS n FROM outbox GROUP BY status`)
+    .all<{ status: string; n: number }>();
   return Object.fromEntries((r.results ?? []).map((x) => [x.status, x.n]));
 }

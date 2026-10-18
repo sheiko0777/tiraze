@@ -42,7 +42,9 @@ export async function applyMigrations(db: D1Database): Promise<void> {
       try {
         await db.prepare(stmt).run();
       } catch (err) {
-        throw new Error(`migration ${file} failed at:\n${stmt.slice(0, 200)}\n${(err as Error).message}`);
+        throw new Error(
+          `migration ${file} failed at:\n${stmt.slice(0, 200)}\n${(err as Error).message}`,
+        );
       }
     }
   }

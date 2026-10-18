@@ -11,7 +11,8 @@ export class MoneyError extends Error {
 }
 
 export function assertPiastres(value: number, label = 'amount'): Piastres {
-  if (!Number.isSafeInteger(value)) throw new MoneyError(`${label} must be an integer number of piastres`);
+  if (!Number.isSafeInteger(value))
+    throw new MoneyError(`${label} must be an integer number of piastres`);
   return value;
 }
 
@@ -23,7 +24,8 @@ export function addPiastres(...values: Piastres[]): Piastres {
 
 export function multiplyPiastres(unit: Piastres, qty: number): Piastres {
   assertPiastres(unit, 'unit price');
-  if (!Number.isSafeInteger(qty) || qty < 0) throw new MoneyError('quantity must be a non-negative integer');
+  if (!Number.isSafeInteger(qty) || qty < 0)
+    throw new MoneyError('quantity must be a non-negative integer');
   return assertPiastres(unit * qty, 'line total');
 }
 

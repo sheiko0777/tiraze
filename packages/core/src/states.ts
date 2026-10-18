@@ -1,7 +1,13 @@
 // Three independent status axes. The database enforces the same rules with guarded UPDATEs
 // (WHERE status = expected) and triggers; this module documents and checks them in code.
 
-export const ORDER_STATUSES = ['awaiting_payment', 'pending_cod_review', 'confirmed', 'cancelled', 'completed'] as const;
+export const ORDER_STATUSES = [
+  'awaiting_payment',
+  'pending_cod_review',
+  'confirmed',
+  'cancelled',
+  'completed',
+] as const;
 export const PAYMENT_STATUSES = [
   'unpaid',
   'pending',
@@ -12,7 +18,13 @@ export const PAYMENT_STATUSES = [
   'refunded',
   'paid_unallocated',
 ] as const;
-export const FULFILLMENT_STATUSES = ['unfulfilled', 'preparing', 'shipped', 'delivered', 'returned'] as const;
+export const FULFILLMENT_STATUSES = [
+  'unfulfilled',
+  'preparing',
+  'shipped',
+  'delivered',
+  'returned',
+] as const;
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
@@ -62,9 +74,20 @@ export function canStartFulfillment(order: {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: 'kashier' | 'cod';
+  paidPiastres?: number;
+  refundedPiastres?: number;
+  totalPiastres?: number;
 }): boolean {
   if (order.status !== 'confirmed') return false;
-  if (order.paymentMethod === 'kashier') return order.paymentStatus === 'paid';
+  if (order.paymentMethod === 'kashier')
+    return (
+      order.paymentStatus === 'paid' ||
+      (order.paymentStatus === 'partially_refunded' &&
+        order.paidPiastres != null &&
+        order.refundedPiastres != null &&
+        order.totalPiastres != null &&
+        order.paidPiastres - order.refundedPiastres >= order.totalPiastres)
+    );
   // COD is collected on delivery; staff confirmation does not make it paid.
   return order.paymentStatus === 'unpaid' || order.paymentStatus === 'paid';
 }

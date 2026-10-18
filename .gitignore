@@ -35,3 +35,12 @@ tools/irth-live-styles.css
 /assets/safaa.png
 /assets/silk-detail.png
 /assets/silk-editorial.png
+
+/apps/web/src/lib/editorial.js
+/apps/web/src/lib/editorial-data.js
+/apps/web/public/*.css
+/apps/web/public/site.webmanifest
+
+/apps/web/build/
+/qa/commerce/
+/qa/backup-tests/

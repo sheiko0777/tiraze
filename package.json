@@ -8,7 +8,7 @@
     "node": ">=22.22.0"
   },
   "scripts": {
-    "typecheck": "pnpm -r --parallel run typecheck",
+    "typecheck": "node apps/web/scripts/sync-assets.mjs && pnpm -r --parallel run typecheck && tsc -p tools/tsconfig.json",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
@@ -17,12 +17,17 @@
     "dev": "pnpm --filter @tiraze/web dev",
     "db:migrate:local": "pnpm --filter @tiraze/web exec wrangler d1 migrations apply DB --local",
     "db:seed:fixtures:local": "pnpm --filter @tiraze/web exec wrangler d1 execute DB --local --file ../../packages/db/fixtures/test-fixtures.sql",
-    "preview:legacy": "python serve.py"
+    "preview:legacy": "python serve.py",
+    "format": "prettier --write \"apps/**/*.{ts,astro,mjs,json,jsonc,css}\" \"packages/**/*.{ts,json}\" \"tests/**/*.{ts,mjs}\" \"tools/lib/**/*.ts\"",
+    "setup:local": "node tools/init-local.mjs && pnpm db:migrate:local"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261016.1",
     "@types/node": "26.6.5",
     "miniflare": "4.20260730.0",
+    "playwright": "1.62.1",
+    "prettier": "3.9.10",
+    "prettier-plugin-astro": "^1.1.1",
     "query-string": "9.5.1",
     "typescript": "6.0.3",
     "vitest": "4.1.12"

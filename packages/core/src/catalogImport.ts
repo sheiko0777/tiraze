@@ -67,6 +67,7 @@ export function parseCsv(input: string): string[][] {
       row = [];
     } else field += c;
   }
+  if (quoted) throw new Error('unterminated_csv_quote');
   row.push(field);
   if (row.some((v) => v !== '')) rows.push(row);
   return rows;
@@ -122,18 +123,48 @@ export function validateCatalogCsv(
   csv: string,
   opts: { existingSkuCodes?: ReadonlySet<string>; allowedImageHosts: readonly string[] },
 ): ImportReport {
-  const table = parseCsv(csv);
+  let table: string[][];
+  try {
+    table = parseCsv(csv);
+  } catch {
+    return {
+      rows: [],
+      errors: [{ rowNumber: 1, column: '*', code: 'malformed_csv' }],
+      productCount: 0,
+    };
+  }
   const errors: RowError[] = [];
   const rows: ImportRow[] = [];
   const header = table[0]?.map((h) => h.trim().toLowerCase());
-  if (!header) return { rows, errors: [{ rowNumber: 1, column: '*', code: 'empty_file' }], productCount: 0 };
+  if (!header)
+    return { rows, errors: [{ rowNumber: 1, column: '*', code: 'empty_file' }], productCount: 0 };
   const missing = IMPORT_COLUMNS.filter((c) => !header.includes(c));
   if (missing.length) {
-    return { rows, errors: missing.map((c) => ({ rowNumber: 1, column: c, code: 'missing_column' })), productCount: 0 };
+    return {
+      rows,
+      errors: missing.map((c) => ({ rowNumber: 1, column: c, code: 'missing_column' })),
+      productCount: 0,
+    };
   }
+  if (new Set(header).size !== header.length)
+    return {
+      rows: [],
+      errors: [{ rowNumber: 1, column: '*', code: 'duplicate_header' }],
+      productCount: 0,
+    };
   const body = table.slice(1);
+  if (!body.length)
+    return {
+      rows: [],
+      errors: [{ rowNumber: 2, column: '*', code: 'empty_file' }],
+      productCount: 0,
+    };
   if (body.length > MAX_IMPORT_ROWS) {
-    return { rows, errors: [{ rowNumber: 1, column: '*', code: 'too_many_rows' }], productCount: 0 };
+    return {
+      rows,
+      errors: [{ rowNumber: 1, column: '*', code: 'too_many_rows' }],
+      productCount: 0,
+    };
   }
 
   const seenSku = new Set<string>();
@@ -144,6 +175,8 @@ export function validateCatalogCsv(
     const rowNumber = i + 2;
     const get = (c: ImportColumn) => (cells[header.indexOf(c)] ?? '').trim();
     const rowErrors: RowError[] = [];
+    if (cells.length !== header.length)
+      rowErrors.push({ rowNumber, column: '*', code: 'column_count' });
     const err = (column: string, code: string) => rowErrors.push({ rowNumber, column, code });
     const int = (c: ImportColumn, min: number, max: number) => {
       const raw = get(c);
@@ -169,7 +202,8 @@ export function validateCatalogCsv(
     if (!SLUG.test(slugAr)) err('slug_ar', 'invalid_slug');
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slugEn)) err('slug_en', 'invalid_slug');
     const prior = productSlugs.get(productKey);
-    if (prior && (prior.slugAr !== slugAr || prior.slugEn !== slugEn)) err('product_key', 'inconsistent_slugs');
+    if (prior && (prior.slugAr !== slugAr || prior.slugEn !== slugEn))
+      err('product_key', 'inconsistent_slugs');
     for (const [loc, s] of [
       ['ar', slugAr],
       ['en', slugEn],
@@ -178,7 +212,16 @@ export function validateCatalogCsv(
       if (owner && owner !== productKey) err(`slug_${loc}`, 'duplicate_slug');
     }
 
-    for (const c of ['title_ar', 'title_en', 'description_ar', 'description_en', 'material', 'technique', 'image_alt_ar', 'image_alt_en'] as const) {
+    for (const c of [
+      'title_ar',
+      'title_en',
+      'description_ar',
+      'description_en',
+      'material',
+      'technique',
+      'image_alt_ar',
+      'image_alt_en',
+    ] as const) {
       const v = get(c);
       if (!v) err(c, 'required');
       else if (v.length > (c.startsWith('description') ? 4000 : 200)) err(c, 'too_long');
@@ -197,7 +240,8 @@ export function validateCatalogCsv(
     }
     const quantity = int('quantity', 0, 10_000);
     const uniqueRaw = get('unique_piece').toLowerCase();
-    if (!['yes', 'no', 'true', 'false', '1', '0'].includes(uniqueRaw)) err('unique_piece', 'invalid_boolean');
+    if (!['yes', 'no', 'true', 'false', '1', '0'].includes(uniqueRaw))
+      err('unique_piece', 'invalid_boolean');
     const uniquePiece = ['yes', 'true', '1'].includes(uniqueRaw);
     if (uniquePiece && quantity > 1) err('quantity', 'unique_piece_quantity_gt_1');
 
@@ -205,11 +249,19 @@ export function validateCatalogCsv(
       .split('|')
       .map((s) => s.trim())
       .filter(Boolean);
+    if (imageUrls.length > 12) err('image_urls', 'too_many_images');
     if (imageUrls.length === 0) err('image_urls', 'required');
     for (const u of imageUrls) {
       try {
         const url = new URL(u);
-        if (url.protocol !== 'https:' || !opts.allowedImageHosts.includes(url.hostname)) err('image_urls', 'host_not_allowed');
+        if (
+          url.protocol !== 'https:' ||
+          url.username ||
+          url.password ||
+          url.port ||
+          !opts.allowedImageHosts.includes(url.hostname)
+        )
+          err('image_urls', 'host_not_allowed');
       } catch {
         err('image_urls', 'invalid_url');
       }
@@ -258,5 +310,9 @@ export function validateCatalogCsv(
     }
   });
 
-  return { rows: errors.length ? [] : rows, errors, productCount: new Set(rows.map((r) => r.productKey)).size };
+  return {
+    rows: errors.length ? [] : rows,
+    errors,
+    productCount: new Set(rows.map((r) => r.productKey)).size,
+  };
 }
